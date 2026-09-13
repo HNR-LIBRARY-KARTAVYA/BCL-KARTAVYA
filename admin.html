@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>BCL KARTAVYA - Admin</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#16263e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16263e; --ink-soft:#374863;
+    --teal:#0e6e64; --teal-deep:#0a5750;
+    --gold:#b8862c; --gold-deep:#8f6a20;
+    --bg:#eef1ec; --card:#ffffff; --line:#e1e5df;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',Arial,sans-serif;}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
+  .flagbar{height:4px;background:linear-gradient(90deg,#ff9933,#f4f2ea 50%,#128a4d);}
+  .headerRow{display:flex;align-items:center;gap:13px;}
+  .logo-circle{width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,.55);background:#fff;}
+  .logo-circle img{width:100%;height:100%;object-fit:cover;}
+  .headtext{flex:1;min-width:0;}
+  header{background:var(--ink);color:#fff;padding:16px 20px;}
+  header h1{margin:0;font-size:20px;font-weight:600;}
+  header p{margin:3px 0 0;font-size:12px;color:#c7d0de;}
+  .wrap{max-width:1150px;margin:0 auto;padding:16px;}
+
+  #pinGate{max-width:340px;margin:60px auto;background:var(--card);border-radius:14px;padding:26px;box-shadow:0 8px 24px rgba(22,38,62,.08);text-align:center;}
+  #pinGate h2{margin:0 0 6px;font-size:19px;}
+  #pinGate p{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;}
+  #pinGate input{width:100%;padding:12px;font-size:18px;text-align:center;letter-spacing:4px;border:1px solid #d4dad2;border-radius:9px;}
+  #pinGate button{margin-top:12px;width:100%;padding:11px;border:none;border-radius:9px;background:var(--teal);color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  #pinGate .err{color:#b0392b;font-size:12.5px;margin-top:8px;min-height:16px;}
+  #appBody{display:none;}
+
+  .filters{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(22,38,62,.06),0 8px 24px rgba(22,38,62,.05);
+            display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;border:1px solid var(--line);}
+  .filters div{display:flex;flex-direction:column;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+  input,select{padding:9px;border:1px solid #d4dad2;border-radius:7px;font-size:13px;margin-top:4px;font-family:inherit;}
+  button{padding:9px 16px;border:none;border-radius:7px;background:var(--ink);color:#fff;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;}
+  button.secondary{background:var(--teal);}
+  button.warn{background:var(--gold-deep);}
+  button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(22,38,62,.06),0 8px 24px rgba(22,38,62,.05);}
+  th,td{padding:8px 10px;font-size:12px;text-align:left;border-bottom:1px solid #f0f1ec;}
+  th{background:var(--ink);color:#fff;font-weight:600;}
+  tr:nth-child(even){background:#fafbf9;}
+  .sessionCell{white-space:nowrap;}
+  .sessionCell .s1{color:var(--teal-deep);}
+  .sessionCell .s2{color:var(--gold-deep);}
+  .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700;}
+  .pill.P{background:#e7f5f1;color:var(--teal-deep);}
+  .pill.L{background:#fbf1de;color:var(--gold-deep);}
+  .pill.A{background:#fbeae7;color:#b0392b;}
+  .pill.LV{background:#eef0ff;color:#5b3fc0;}
+  .pill.H{background:#fdeee0;color:#c0692b;}
+  .pill.WO{background:#eee;color:#777;}
+  .pill.Checked{background:#eaf1ff;color:#2a4568;}
+  .pill.REJECTED,.pill.Not{background:#fbeae7;color:#b0392b;}
+  .legend{font-size:11px;color:#7a8579;margin-bottom:10px;}
+  .legend span{margin-right:10px;}
+  #printHead{display:none;}
+  @media print { header,.filters,.toggle,.actions,.legend,.tabs{display:none;} #printHead{display:block;text-align:center;margin-bottom:10px;} body{background:#fff;} }
+  .toggle{text-align:center;margin:14px 0;}
+  .toggle a{font-size:12px;color:var(--ink-soft);cursor:pointer;text-decoration:underline;}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .modal{position:fixed;inset:0;background:rgba(22,38,62,.45);display:none;align-items:center;justify-content:center;z-index:50;}
+  .modal.show{display:flex;}
+  .modal-card{background:#fff;border-radius:14px;padding:22px;width:90%;max-width:380px;}
+  .modal-card h3{margin-top:0;}
+  .timerow{display:flex;gap:10px;}
+  .timerow>div{flex:1;}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .tabbtn{padding:8px 14px;border-radius:8px;background:#fff;border:1px solid var(--line);color:var(--ink-soft);font-weight:700;font-size:12.5px;cursor:pointer;}
+  .tabbtn.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .staffTable button{padding:5px 10px;font-size:11.5px;}
+</style>
+</head>
+<body>
+<div class="modal show" id="setupGate" style="z-index:80;">
+  <div class="modal-card" style="max-width:380px;">
+    <h3 style="margin-top:0;">Connect to BCL KARTAVYA backend</h3>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">Paste the Apps Script Web App URL from your deployment (ends in <code>/exec</code>). Stored only on this device.</div>
+    <input id="apiUrlInput" style="width:100%;" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+    <button class="secondary" style="width:100%;margin-top:12px;" onclick="saveApiUrl()">Save &amp; Continue</button>
+  </div>
+</div>
+<div id="pinGate">
+  <h2>Admin Access</h2>
+  <p>Enter the BCL KARTAVYA admin PIN to continue.</p>
+  <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="••••">
+  <button onclick="tryPin()">Unlock</button>
+  <div class="err" id="pinErr"></div>
+</div>
+
+<div id="appBody">
+<div class="flagbar"></div>
+<header class="headerRow">
+  <div class="logo-circle"><img src="data:image/jpeg;base64,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" alt="District Central Library, Karwar logo"></div>
+  <div class="headtext">
+    <h1 style="margin:0;">BCL KARTAVYA - Admin</h1>
+    <p style="margin:3px 0 0;font-size:12px;color:#c7d0de;">Attendance Register | District Central Library, Karwar</p>
+  </div>
+</header>
+<div class="wrap">
+  <div id="printHead">
+    <h2 style="margin:0;" id="printTitle"></h2>
+    <div id="printRange"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn on" id="tabAttendance" onclick="switchTab('attendance')">Attendance</button>
+    <button class="tabbtn" id="tabStaff" onclick="switchTab('staff')">Staff &amp; Timing</button>
+    <button class="tabbtn" id="tabMovement" onclick="switchTab('movement')">Movement Register</button>
+  </div>
+
+  <div class="filters">
+    <div>Branch
+      <select id="branchSelect" onchange="onBranchChange()">
+        <option value="HNR">Branch Honavar</option>
+        <option value="KUMT">Kumta Branch</option>
+      </select>
+    </div>
+    <div>From<input type="date" id="fromDate"></div>
+    <div>To<input type="date" id="toDate"></div>
+    <button onclick="loadData()">Search</button>
+    <button class="secondary" onclick="loadToday()">Today</button>
+    <button class="ghost" onclick="window.print()">Print</button>
+  </div>
+
+  <div id="viewAttendance">
+    <div class="actions">
+      <button class="warn" onclick="openLeaveModal()">Mark Leave</button>
+      <button class="warn" onclick="openHolidayModal()">Add One-off Holiday</button>
+      <button class="ghost" onclick="downloadPdf()">Download PDF Report</button>
+      <button class="ghost" onclick="downloadGrid()">Download Monthly Grid</button>
+    </div>
+    <div class="legend">
+      <span class="pill P">P</span>Present
+      <span class="pill L">L</span>Late
+      <span class="pill A">A</span>Absent
+      <span class="pill LV">LV</span>Leave
+      <span class="pill H">H</span>Holiday
+      <span class="pill WO">WO</span>Weekly Off (Monday)
+      &nbsp;|&nbsp; auto holidays: every Monday, 2nd Tuesday, 4th Saturday
+    </div>
+    <table id="tbl">
+      <thead><tr><th>Date</th><th>Day</th><th>Staff</th><th>Designation</th><th>Session 1</th><th>Session 2</th><th>Status</th><th>Remarks</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div id="viewStaff" style="display:none;">
+    <div class="actions">
+      <button class="secondary" onclick="openStaffModal()">+ Add Staff (with timing)</button>
+      <button class="ghost" onclick="openGeofenceModal()">Branch Geofence Settings</button>
+    </div>
+    <table class="staffTable">
+      <thead><tr><th>Name</th><th>Designation</th><th>Phone</th><th>Session 1</th><th>Session 2</th><th>Face on file</th><th></th></tr></thead>
+      <tbody id="staffTbody"></tbody>
+    </table>
+  </div>
+
+  <div id="viewMovement" style="display:none;">
+    <table>
+      <thead><tr><th>Date</th><th>Staff</th><th>Time Out</th><th>Purpose</th><th>Destination</th><th>Time In</th><th>Duration (min)</th><th>Remarks</th></tr></thead>
+      <tbody id="movTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="toggle"><a href="index.html">← back to check-in</a></div>
+</div>
+
+<!-- Leave modal -->
+<div class="modal" id="leaveModal">
+  <div class="modal-card">
+    <h3>Mark Leave</h3>
+    <label style="font-size:12px;font-weight:600;">Staff</label>
+    <select id="leaveStaff" style="width:100%;margin-top:4px;"></select>
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Date</label>
+    <input type="date" id="leaveDate" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Remarks (optional)</label>
+    <input id="leaveRemarks" style="width:100%;" placeholder="e.g. Casual leave">
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('leaveModal')">Cancel</button>
+      <button class="secondary" onclick="submitLeave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Holiday modal -->
+<div class="modal" id="holidayModal">
+  <div class="modal-card">
+    <h3>Add One-off Holiday</h3>
+    <label style="font-size:12px;font-weight:600;">Date</label>
+    <input type="date" id="holidayDate" style="width:100%;margin-top:4px;">
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Description</label>
+    <input id="holidayDesc" style="width:100%;" placeholder="e.g. Independence Day">
+    <div style="font-size:11px;color:#7a8579;margin-top:6px;">Applies to both branches. Weekly Monday off, 2nd Tuesday and 4th Saturday are already automatic - no need to add those here.</div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('holidayModal')">Cancel</button>
+      <button class="secondary" onclick="submitHoliday()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff add modal -->
+<div class="modal" id="staffModal">
+  <div class="modal-card" style="max-width:400px;">
+    <h3>Add Staff</h3>
+    <label style="font-size:12px;font-weight:600;">Full Name</label>
+    <input id="stName" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Designation</label>
+    <input id="stDesignation" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Phone</label>
+    <input id="stPhone" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Session 1 (In / Out)</label>
+    <div class="timerow"><input type="time" id="stS1In" value="08:00"><input type="time" id="stS1Out" value="11:30"></div>
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Session 2 (In / Out)</label>
+    <div class="timerow"><input type="time" id="stS2In" value="16:00"><input type="time" id="stS2Out" value="18:30"></div>
+    <div style="font-size:11px;color:#7a8579;margin-top:8px;">This creates the staff record without a face. The staff member completes their own face capture from the check-in screen the first time they register in person.</div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('staffModal')">Cancel</button>
+      <button class="secondary" onclick="submitStaffAdd()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff timing edit modal -->
+<div class="modal" id="timingModal">
+  <div class="modal-card" style="max-width:380px;">
+    <h3>Edit Timing</h3>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;" id="timingStaffName"></div>
+    <label style="font-size:12px;font-weight:600;">Session 1 (In / Out)</label>
+    <div class="timerow"><input type="time" id="tmS1In"><input type="time" id="tmS1Out"></div>
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Session 2 (In / Out)</label>
+    <div class="timerow"><input type="time" id="tmS2In"><input type="time" id="tmS2Out"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('timingModal')">Cancel</button>
+      <button class="secondary" onclick="submitTimingEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Geofence modal -->
+<div class="modal" id="geoModal">
+  <div class="modal-card" style="max-width:380px;">
+    <h3>Branch Geofence</h3>
+    <label style="font-size:12px;font-weight:600;">Branch</label>
+    <select id="geoBranch" style="width:100%;margin-top:4px;" onchange="loadGeoConfig()">
+      <option value="HNR">Branch Honavar</option>
+      <option value="KUMT">Kumta Branch</option>
+    </select>
+    <label style="font-size:12px;font-weight:600;margin-top:10px;display:block;">Latitude</label>
+    <input id="geoLat" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Longitude</label>
+    <input id="geoLng" style="width:100%;">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Geofence radius (m)</label>
+    <input id="geoRadius" style="width:100%;" type="number">
+    <div style="font-size:11px;color:#7a8579;margin-top:6px;">Kumta is currently set to Honavar's coordinates as a placeholder - update it here once the real geofence is confirmed.</div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('geoModal')">Cancel</button>
+      <button class="secondary" onclick="submitGeofence()">Save</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+let API_URL = localStorage.getItem('bcl_kartavya_api_url') || '';
+function saveApiUrl() {
+  const v = document.getElementById('apiUrlInput').value.trim();
+  if (!v.startsWith('https://script.google.com/')) { alert('Paste the full Apps Script web app URL (ends in /exec).'); return; }
+  localStorage.setItem('bcl_kartavya_api_url', v); API_URL = v;
+  document.getElementById('setupGate').classList.remove('show');
+}
+async function apiPost(body) {
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Server error');
+  return json.data;
+}
+if (API_URL) document.getElementById('setupGate').classList.remove('show');
+document.getElementById('apiUrlInput').value = API_URL;
+
+function tryPin() {
+  const pin = document.getElementById('pinInput').value;
+  apiPost({ action: 'checkAdminPin', pin }).then(ok => {
+    if (ok) { document.getElementById('pinGate').style.display = 'none'; document.getElementById('appBody').style.display = 'block'; loadToday(); }
+    else document.getElementById('pinErr').textContent = 'Incorrect PIN.';
+  }).catch(err => document.getElementById('pinErr').textContent = err.message);
+}
+document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryPin(); });
+
+function switchTab(name) {
+  ['attendance','staff','movement'].forEach(t => {
+    document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t===name) ? 'block' : 'none';
+    document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('on', t===name);
+  });
+  if (name === 'staff') loadStaffTab();
+  if (name === 'movement') loadMovementTab();
+}
+
+function pillClass(status) {
+  if (!status) return '';
+  if (status.indexOf('Not') === 0) return 'REJECTED';
+  if (status === 'Checked Out') return 'Checked';
+  return status;
+}
+function pill(status) { return status ? `<span class="pill ${pillClass(status)}">${status}</span>` : '-'; }
+
+function branchName() { return document.getElementById('branchSelect').selectedOptions[0].text; }
+
+function sessionCell(inT, outT, cls) {
+  if (!inT && !outT) return '-';
+  return `<span class="${cls}">${inT||'-'} → ${outT||'-'}</span>`;
+}
+
+function render(rows) {
+  document.getElementById('tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.Date}</td><td>${r.Day || ''}</td><td>${r.Name}</td><td>${r.Designation || ''}</td>
+      <td class="sessionCell">${sessionCell(r.S1TimeIn, r.S1TimeOut, 's1')}</td>
+      <td class="sessionCell">${sessionCell(r.S2TimeIn, r.S2TimeOut, 's2')}</td>
+      <td>${pill(r.S1StatusIn || r.S2StatusIn)}</td><td>${r.Remarks || ''}</td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No records found.</td></tr>';
+}
+
+function loadData() {
+  const from = document.getElementById('fromDate').value, to = document.getElementById('toDate').value;
+  document.getElementById('printTitle').textContent = 'BCL KARTAVYA - ' + branchName();
+  document.getElementById('printRange').textContent = `${from} to ${to}`;
+  apiPost({ action: 'getAttendanceMatrix', branch: document.getElementById('branchSelect').value, fromDate: from, toDate: to })
+    .then(render).catch(err => alert(err.message));
+}
+function loadToday() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('fromDate').value = today; document.getElementById('toDate').value = today;
+  loadData();
+}
+function onBranchChange() { loadData(); if (document.getElementById('viewStaff').style.display!=='none') loadStaffTab(); if (document.getElementById('viewMovement').style.display!=='none') loadMovementTab(); }
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function openLeaveModal() {
+  apiPost({ action: 'getStaffList', branch: document.getElementById('branchSelect').value }).then(list => {
+    document.getElementById('leaveStaff').innerHTML = list.filter(s=>s.active).map(s => `<option value="${s.staffId}|${s.name}|${s.designation}">${s.name}</option>`).join('');
+  }).catch(err => alert(err.message));
+  document.getElementById('leaveDate').value = new Date().toISOString().slice(0,10);
+  openModal('leaveModal');
+}
+function submitLeave() {
+  const [staffId, name, designation] = document.getElementById('leaveStaff').value.split('|');
+  const date = document.getElementById('leaveDate').value;
+  const remarks = document.getElementById('leaveRemarks').value;
+  apiPost({ action: 'markLeave', data: { branch: document.getElementById('branchSelect').value, staffId, name, designation, date, remarks } })
+    .then(() => { closeModal('leaveModal'); loadData(); }).catch(err => alert(err.message));
+}
+
+function openHolidayModal() {
+  document.getElementById('holidayDate').value = new Date().toISOString().slice(0,10);
+  openModal('holidayModal');
+}
+function submitHoliday() {
+  const date = document.getElementById('holidayDate').value;
+  const desc = document.getElementById('holidayDesc').value;
+  apiPost({ action: 'addHoliday', date, description: desc })
+    .then(() => { closeModal('holidayModal'); loadData(); }).catch(err => alert(err.message));
+}
+
+/* ---- Staff & timing tab ---- */
+let staffCache = [];
+function loadStaffTab() {
+  apiPost({ action: 'getStaffList', branch: document.getElementById('branchSelect').value }).then(list => {
+    staffCache = list;
+    document.getElementById('staffTbody').innerHTML = list.map(s => `
+      <tr>
+        <td>${s.name}</td><td>${s.designation||''}</td><td>${s.phone||''}</td>
+        <td class="sessionCell"><span class="s1">${s.s1In||'-'} → ${s.s1Out||'-'}</span></td>
+        <td class="sessionCell"><span class="s2">${s.s2In||'-'} → ${s.s2Out||'-'}</span></td>
+        <td>${s.hasFace ? '✓' : '-'}</td>
+        <td><button class="ghost" onclick="openTimingModal('${s.staffId}')">Edit timing</button></td>
+      </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;">No staff yet.</td></tr>';
+  }).catch(err => alert(err.message));
+}
+function openStaffModal() { openModal('staffModal'); }
+function submitStaffAdd() {
+  const data = {
+    branch: document.getElementById('branchSelect').value,
+    name: document.getElementById('stName').value.trim(),
+    designation: document.getElementById('stDesignation').value.trim(),
+    phone: document.getElementById('stPhone').value.trim(),
+    s1In: document.getElementById('stS1In').value, s1Out: document.getElementById('stS1Out').value,
+    s2In: document.getElementById('stS2In').value, s2Out: document.getElementById('stS2Out').value
+  };
+  if (!data.name) return alert('Enter the staff name.');
+  apiPost({ action: 'preRegisterStaff', data })
+    .then(() => { closeModal('staffModal'); loadStaffTab(); }).catch(err => alert(err.message));
+}
+function openTimingModal(staffId) {
+  const s = staffCache.find(x => x.staffId === staffId);
+  if (!s) return;
+  document.getElementById('timingStaffName').textContent = s.name + (s.designation ? ' - ' + s.designation : '');
+  document.getElementById('tmS1In').value = s.s1In || '';
+  document.getElementById('tmS1Out').value = s.s1Out || '';
+  document.getElementById('tmS2In').value = s.s2In || '';
+  document.getElementById('tmS2Out').value = s.s2Out || '';
+  document.getElementById('timingModal').dataset.staffId = staffId;
+  openModal('timingModal');
+}
+function submitTimingEdit() {
+  const staffId = document.getElementById('timingModal').dataset.staffId;
+  apiPost({ action: 'updateStaffTiming', data: {
+      branch: document.getElementById('branchSelect').value, staffId,
+      s1In: document.getElementById('tmS1In').value, s1Out: document.getElementById('tmS1Out').value,
+      s2In: document.getElementById('tmS2In').value, s2Out: document.getElementById('tmS2Out').value
+    } })
+    .then(() => { closeModal('timingModal'); loadStaffTab(); }).catch(err => alert(err.message));
+}
+
+/* ---- Geofence ---- */
+function openGeofenceModal() { document.getElementById('geoBranch').value = document.getElementById('branchSelect').value; loadGeoConfig(); openModal('geoModal'); }
+function loadGeoConfig() {
+  apiPost({ action: 'getBranchConfig', branch: document.getElementById('geoBranch').value }).then(cfg => {
+    document.getElementById('geoLat').value = cfg.lat;
+    document.getElementById('geoLng').value = cfg.lng;
+    document.getElementById('geoRadius').value = cfg.radius;
+  }).catch(err => alert(err.message));
+}
+function submitGeofence() {
+  apiPost({ action: 'setBranchConfig', branch: document.getElementById('geoBranch').value,
+      lat: parseFloat(document.getElementById('geoLat').value), lng: parseFloat(document.getElementById('geoLng').value),
+      radius: parseInt(document.getElementById('geoRadius').value, 10) })
+    .then(() => closeModal('geoModal')).catch(err => alert(err.message));
+}
+
+/* ---- Movement register tab ---- */
+function loadMovementTab() {
+  const from = document.getElementById('fromDate').value, to = document.getElementById('toDate').value;
+  apiPost({ action: 'getMovementLog', branch: document.getElementById('branchSelect').value, fromDate: from, toDate: to }).then(rows => {
+    document.getElementById('movTbody').innerHTML = rows.map(r => `
+      <tr><td>${r.Date}</td><td>${r.Name}</td><td>${r.TimeOut}</td><td>${r.Purpose||''}</td><td>${r.Destination||''}</td><td>${r.TimeIn||'-'}</td><td>${r.DurationMin||''}</td><td>${r.Remarks||''}</td></tr>
+    `).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">No movement records.</td></tr>';
+  }).catch(err => alert(err.message));
+}
+
+/* ---- PDF downloads ---- */
+function b64ToBlobUrl(base64, filename) {
+  const bytes = atob(base64); const arr = new Uint8Array(bytes.length);
+  for (let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
+  const blob = new Blob([arr], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+}
+function downloadPdf() {
+  const from = document.getElementById('fromDate').value, to = document.getElementById('toDate').value;
+  apiPost({ action: 'generatePdfReport', branch: document.getElementById('branchSelect').value, fromDate: from, toDate: to })
+    .then(res => b64ToBlobUrl(res.base64, res.filename)).catch(err => alert(err.message));
+}
+function downloadGrid() {
+  const from = new Date(document.getElementById('fromDate').value || new Date());
+  apiPost({ action: 'generateMonthlyGridReport', branch: document.getElementById('branchSelect').value, year: from.getFullYear(), month: from.getMonth()+1 })
+    .then(res => b64ToBlobUrl(res.base64, res.filename)).catch(err => alert(err.message));
+}
+</script>
+</body>
+</html>
