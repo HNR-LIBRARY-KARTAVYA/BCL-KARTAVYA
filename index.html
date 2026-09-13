@@ -54,6 +54,17 @@
   .sessionTab.s2cur .now-dot{background:var(--gold);}
 
   video,canvas{width:100%;border-radius:11px;background:#0d1420;margin-top:12px;}
+  .cameraBox{position:relative;display:none;}
+  .cameraBox.show{display:block;}
+  .faceGuide{position:absolute;left:50%;top:calc(50% + 6px);transform:translate(-50%,-50%);
+    width:46%;height:72%;border:3px dashed rgba(255,255,255,.75);border-radius:50%;pointer-events:none;}
+  .stepRow{display:flex;gap:8px;margin-top:12px;}
+  .stepRow .step{flex:1;text-align:center;padding:7px 4px;border-radius:8px;background:#f4f6f2;font-size:10.5px;font-weight:700;color:#9aa39a;border:1px solid var(--line);transition:all .2s;}
+  .stepRow .step .ic{display:block;font-size:13px;margin-bottom:2px;}
+  .stepRow .step.active{background:#eef2f8;color:#2a4568;border-color:#c9d6e8;}
+  .stepRow .step.done{background:#e7f5f1;color:var(--teal-deep);border-color:#bfe4dc;}
+  .pendingBadge{display:none;font-size:9px;font-weight:800;letter-spacing:.3px;background:#1e9e5a;color:#fff;border-radius:5px;padding:1px 6px;margin-top:4px;}
+  .sessionTab.current .pendingBadge{display:inline-block;}
   .locrow{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:#6b7a68;}
   .locrow .dot{width:7px;height:7px;border-radius:50%;background:#c9c9c9;flex-shrink:0;}
   .locrow .dot.ready{background:var(--teal);}
@@ -93,7 +104,7 @@
 <div class="flagbar"></div>
 <div class="card" id="setupCard" style="display:none;">
     <h3 style="margin:0 0 6px;font-size:16px;">Connect to BCL KARTAVYA backend</h3>
-    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy → Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
+    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy â†’ Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
     <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
     <button class="btn-reg" onclick="saveApiUrl()">Save &amp; Continue</button>
   </div>
@@ -124,14 +135,23 @@
     <div class="staffChip" id="staffChip" style="display:none;"></div>
 
     <div class="sessionTabs">
-      <div class="sessionTab active-s1" id="tabS1" onclick="selectSession(1)">Session 1<span class="t" id="tabS1Time">morning</span></div>
-      <div class="sessionTab" id="tabS2" onclick="selectSession(2)">Session 2<span class="t" id="tabS2Time">evening</span></div>
+      <div class="sessionTab active-s1" id="tabS1" onclick="selectSession(1)">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
+      <div class="sessionTab" id="tabS2" onclick="selectSession(2)">Session 2<span class="t" id="tabS2Time">evening</span><span class="pendingBadge">DUE NOW</span></div>
     </div>
 
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+    <div class="stepRow">
+      <div class="step" id="stepLoc"><span class="ic">1</span>Location</div>
+      <div class="step" id="stepFace"><span class="ic">2</span>Face</div>
+      <div class="step" id="stepDone"><span class="ic">3</span>Attendance</div>
+    </div>
 
     <div class="locrow"><span class="dot" id="locDot"></span><span id="locStatus">Fetching your location...</span></div>
+
+    <div class="cameraBox" id="cameraBox">
+      <video id="video" autoplay muted playsinline></video>
+      <div class="faceGuide"></div>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
 
     <div class="btnrow">
       <button class="btn-in" onclick="submitAttendance('in')">Check In</button>
@@ -182,11 +202,11 @@
     <canvas id="regCanvas" style="display:none;"></canvas>
     <button class="btn-reg" onclick="captureAndRegister()">Capture Face &amp; Register</button>
     <div class="status" id="regStatus"></div>
-    <div class="toggle"><a onclick="showCheckin()">← back to check-in</a></div>
+    <div class="toggle"><a onclick="showCheckin()">â† back to check-in</a></div>
   </div>
 
   <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
-  <div class="toggle"><a href="admin.html">Open Admin / Reports panel →</a></div>
+  <div class="toggle"><a href="admin.html">Open Admin / Reports panel â†’</a></div>
 </div>
 
 <script src="face-api.min.js"></script>
@@ -264,12 +284,25 @@ function startCamera(videoId) {
     setStatus('statusBox', 'bad', 'Camera is blocked in this window. If this keeps happening, open the GitHub Pages link instead of the script.google.com link.');
   }
 }
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+}
+function showCamera() { document.getElementById('cameraBox').classList.add('show'); }
+function hideCamera() { document.getElementById('cameraBox').classList.remove('show'); }
+
 function getLocation() {
+  setStep('stepLoc', 'active');
   if (!navigator.geolocation) { document.getElementById('locStatus').textContent = 'Geolocation not supported on this device.'; return; }
   navigator.geolocation.getCurrentPosition(pos => {
     currentPos = pos.coords;
-    document.getElementById('locStatus').textContent = 'Location captured (±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
+    document.getElementById('locStatus').textContent = 'Location captured (Â±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
     document.getElementById('locDot').classList.add('ready');
+    setStep('stepLoc', 'done');
+    setStep('stepFace', 'active');
+    startCamera('video');
+    showCamera();
   }, () => { document.getElementById('locStatus').textContent = 'Location permission denied - required to mark attendance.'; },
   { enableHighAccuracy: true, timeout: 10000 });
 }
@@ -416,10 +449,18 @@ async function submitAttendance(type) {
   const staff = staffList.find(s => s.staffId === staffId);
   if (!staff) return setStatus('statusBox','bad','No staff selected.');
   if (!currentPos) return setStatus('statusBox','bad','Waiting for GPS location - please allow location access.');
+  const vElCheck = document.getElementById('video');
+  if (!vElCheck.srcObject) {
+    startCamera('video'); showCamera();
+    setStep('stepFace', 'active'); setStep('stepDone', null);
+    return setStatus('statusBox','info','Camera starting - line up your face in the frame, then press this button again.');
+  }
   setStatus('statusBox','info','Verifying face...');
   const canvas = captureFrame('video','canvas');
   const liveDescriptor = await getDescriptor(canvas);
   if (!liveDescriptor) return setStatus('statusBox','bad','No face detected - face the camera clearly and retry.');
+  setStep('stepFace', 'done');
+  setStep('stepDone', 'active');
   try {
     const refDescriptor = await callServer('getStaffDescriptor', currentBranch(), staffId);
     const faceDistance = (refDescriptor && refDescriptor.length) ? faceapi.euclideanDistance(liveDescriptor, refDescriptor) : null;
@@ -430,7 +471,15 @@ async function submitAttendance(type) {
       session: currentSession, lat: currentPos.latitude, lng: currentPos.longitude, photoBase64, faceDistance, type
     });
     setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)`);
-  } catch (err) { setStatus('statusBox','bad', err.message || String(err)); }
+    setStep('stepDone', res.accepted ? 'done' : null);
+  } catch (err) {
+    setStatus('statusBox','bad', err.message || String(err));
+    setStep('stepDone', null);
+  } finally {
+    hideCamera();
+    const vEl = document.getElementById('video');
+    if (vEl.srcObject) { vEl.srcObject.getTracks().forEach(t => t.stop()); vEl.srcObject = null; }
+  }
 }
 
 function showRegister() {
@@ -506,7 +555,6 @@ function boot() {
   loadStaff();
   checkHolidayBanner();
   getLocation();
-  startCamera('video');
   startCamera('pendVideo');
 }
 document.getElementById('regBranchName').textContent = currentBranchName();
