@@ -104,7 +104,7 @@
 <div class="flagbar"></div>
 <div class="card" id="setupCard" style="display:none;">
     <h3 style="margin:0 0 6px;font-size:16px;">Connect to BCL KARTAVYA backend</h3>
-    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy â†’ Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
+    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy → Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
     <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
     <button class="btn-reg" onclick="saveApiUrl()">Save &amp; Continue</button>
   </div>
@@ -135,8 +135,8 @@
     <div class="staffChip" id="staffChip" style="display:none;"></div>
 
     <div class="sessionTabs">
-      <div class="sessionTab active-s1" id="tabS1" onclick="selectSession(1)">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
-      <div class="sessionTab" id="tabS2" onclick="selectSession(2)">Session 2<span class="t" id="tabS2Time">evening</span><span class="pendingBadge">DUE NOW</span></div>
+      <div class="sessionTab active-s1" id="tabS1" onclick="speak('Session 1'); selectSession(1);">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
+      <div class="sessionTab" id="tabS2" onclick="speak('Session 2'); selectSession(2);">Session 2<span class="t" id="tabS2Time">evening</span><span class="pendingBadge">DUE NOW</span></div>
     </div>
 
     <div class="stepRow">
@@ -160,6 +160,7 @@
     <div class="status" id="statusBox"></div>
   </div>
 
+  <div class="toggle" id="pendingToggle" style="display:none;"><a onclick="showPending()">A staff member still needs to complete their face - tap here</a></div>
   <div class="card" id="pendingCard" style="display:none;">
     <h3 style="margin:0 0 4px;font-size:16px;">Complete Your Face Registration</h3>
     <div class="small" style="margin-bottom:10px;">Your admin has already added you with your name and timing. Pick your name and capture your face to finish - no need to fill the form again.</div>
@@ -168,6 +169,7 @@
     <canvas id="pendCanvas" style="display:none;"></canvas>
     <button class="btn-reg" onclick="captureAndCompletePending()">Capture My Face</button>
     <div class="status" id="pendStatus"></div>
+    <div class="toggle"><a onclick="hidePending()">back to check-in</a></div>
   </div>
 
   <div class="toggle"><a onclick="showRegister()">+ Register a new staff face (admin/first-time setup)</a></div>
@@ -202,11 +204,11 @@
     <canvas id="regCanvas" style="display:none;"></canvas>
     <button class="btn-reg" onclick="captureAndRegister()">Capture Face &amp; Register</button>
     <div class="status" id="regStatus"></div>
-    <div class="toggle"><a onclick="showCheckin()">â† back to check-in</a></div>
+    <div class="toggle"><a onclick="showCheckin()">← back to check-in</a></div>
   </div>
 
   <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
-  <div class="toggle"><a href="admin.html">Open Admin / Reports panel â†’</a></div>
+  <div class="toggle"><a href="admin.html">Open Admin / Reports panel →</a></div>
 </div>
 
 <script src="face-api.min.js"></script>
@@ -220,6 +222,25 @@ const MODEL_URLS = [
 let staffList = [];
 let currentPos = null;
 let currentSession = 1;
+let attemptsLeft = 5;
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95; u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function branchSpokenName(key) {
+  return key === 'KUMT'
+    ? 'D C L Karwar Branch Library Kumta'
+    : 'D C L Karwar Branch Library Honavar';
+}
+function speakWelcome() {
+  speak('Welcome to ' + branchSpokenName(currentBranch()) + '. Library Kartavya.');
+}
+function resetAttempts() { attemptsLeft = 5; }
 let API_URL = localStorage.getItem('bcl_kartavya_api_url') || '';
 
 function saveApiUrl() {
@@ -297,10 +318,11 @@ function getLocation() {
   if (!navigator.geolocation) { document.getElementById('locStatus').textContent = 'Geolocation not supported on this device.'; return; }
   navigator.geolocation.getCurrentPosition(pos => {
     currentPos = pos.coords;
-    document.getElementById('locStatus').textContent = 'Location captured (Â±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
+    document.getElementById('locStatus').textContent = 'Location captured (±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
     document.getElementById('locDot').classList.add('ready');
     setStep('stepLoc', 'done');
     setStep('stepFace', 'active');
+    speak('Location success.');
     startCamera('video');
     showCamera();
   }, () => { document.getElementById('locStatus').textContent = 'Location permission denied - required to mark attendance.'; },
@@ -313,6 +335,7 @@ function currentBranchName() { return document.getElementById('branchSelect').se
 function onBranchChange() {
   document.getElementById('regBranchName').textContent = currentBranchName();
   loadStaff();
+  speakWelcome();
 }
 
 function loadStaff() {
@@ -324,12 +347,16 @@ function loadStaff() {
     updateStaffChip();
 
     const pending = list.filter(s => s.active && !s.hasFace);
-    const pendCard = document.getElementById('pendingCard');
+    const pendToggle = document.getElementById('pendingToggle');
     if (pending.length) {
-      pendCard.style.display = 'block';
+      pendToggle.style.display = 'block';
+      pendToggle.querySelector('a').textContent = pending.length === 1
+        ? `${pending[0].name} still needs to complete their face - tap here`
+        : `${pending.length} staff still need to complete their face - tap here`;
       document.getElementById('pendingSelect').innerHTML = pending.map(s => `<option value="${s.staffId}">${s.name}</option>`).join('');
     } else {
-      pendCard.style.display = 'none';
+      pendToggle.style.display = 'none';
+      document.getElementById('pendingCard').style.display = 'none';
     }
   }).catch(err => setStatus('statusBox','bad','Could not load staff list: ' + err.message));
 }
@@ -343,7 +370,14 @@ function updateStaffChip() {
   document.getElementById('tabS2Time').textContent = (s.s2In||'-') + '-' + (s.s2Out||'-');
   highlightCurrentSession();
 }
-document.addEventListener('change', e => { if (e.target.id === 'staffSelect') updateStaffChip(); });
+document.addEventListener('change', e => {
+  if (e.target.id === 'staffSelect') {
+    updateStaffChip();
+    resetAttempts();
+    const s = staffList.find(x => x.staffId === e.target.value);
+    if (s) speak(s.name);
+  }
+});
 
 function selectSession(n) {
   currentSession = n;
@@ -456,11 +490,17 @@ async function submitAttendance(type) {
     return setStatus('statusBox','info','Camera starting - line up your face in the frame, then press this button again.');
   }
   setStatus('statusBox','info','Verifying face...');
+  speak('Capture face.');
   const canvas = captureFrame('video','canvas');
   const liveDescriptor = await getDescriptor(canvas);
-  if (!liveDescriptor) return setStatus('statusBox','bad','No face detected - face the camera clearly and retry.');
+  if (!liveDescriptor) {
+    attemptsLeft = Math.max(0, attemptsLeft - 1);
+    speak('No face detected. You have ' + attemptsLeft + ' chances remaining.');
+    return setStatus('statusBox','bad','No face detected - face the camera clearly and retry.');
+  }
   setStep('stepFace', 'done');
   setStep('stepDone', 'active');
+  speak('Face captured successfully.');
   try {
     const refDescriptor = await callServer('getStaffDescriptor', currentBranch(), staffId);
     const faceDistance = (refDescriptor && refDescriptor.length) ? faceapi.euclideanDistance(liveDescriptor, refDescriptor) : null;
@@ -472,9 +512,18 @@ async function submitAttendance(type) {
     });
     setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)`);
     setStep('stepDone', res.accepted ? 'done' : null);
+    if (res.accepted) {
+      speak('Attendance taken successfully. Thank you. Good day.');
+      resetAttempts();
+    } else {
+      attemptsLeft = Math.max(0, attemptsLeft - 1);
+      speak('Attendance not verified. You have ' + attemptsLeft + ' chances remaining.');
+    }
   } catch (err) {
     setStatus('statusBox','bad', err.message || String(err));
     setStep('stepDone', null);
+    attemptsLeft = Math.max(0, attemptsLeft - 1);
+    speak('Something went wrong. You have ' + attemptsLeft + ' chances remaining.');
   } finally {
     hideCamera();
     const vEl = document.getElementById('video');
@@ -491,6 +540,16 @@ function showRegister() {
 function showCheckin() {
   document.getElementById('registerCard').style.display = 'none';
   document.getElementById('checkinCard').style.display = 'block';
+}
+function showPending() {
+  document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('pendingToggle').style.display = 'none';
+  document.getElementById('pendingCard').style.display = 'block';
+}
+function hidePending() {
+  document.getElementById('pendingCard').style.display = 'none';
+  document.getElementById('checkinCard').style.display = 'block';
+  document.getElementById('pendingToggle').style.display = 'block';
 }
 async function captureAndRegister() {
   const name = document.getElementById('regName').value.trim();
@@ -552,6 +611,7 @@ function checkHolidayBanner() {
 
 function boot() {
   document.getElementById('regBranchName').textContent = currentBranchName();
+  speakWelcome();
   loadStaff();
   checkHolidayBanner();
   getLocation();
