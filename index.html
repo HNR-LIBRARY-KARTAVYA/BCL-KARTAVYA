@@ -88,6 +88,19 @@
   .toggle{text-align:center;margin-top:10px;}
   .toggle a{font-size:12.5px;color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
 
+  .quickGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px;text-align:center;}
+  .quickBtn{cursor:pointer;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+  .quickBtn .qIcon{width:46px;height:46px;margin:0 auto 6px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--ink));
+    color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(22,38,62,.18);}
+  .modal{position:fixed;inset:0;background:rgba(22,38,62,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:16px;}
+  .modal.show{display:flex;}
+  .modal-card{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;}
+  .modal-card h3{margin:0 0 10px;font-size:16px;font-family:'Fraunces',Georgia,serif;}
+  .modal-card .mclose{text-align:right;font-size:12px;color:var(--ink-soft);cursor:pointer;margin-bottom:4px;}
+  .modal-card table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}
+  .modal-card th,.modal-card td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;}
+  .profileRow{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .profileRow b{color:var(--ink);}
   #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:99;text-align:center;padding:20px;}
   #loading .spinner{width:34px;height:34px;border-radius:50%;border:3px solid #d7ddd2;border-top-color:var(--teal);animation:spin 0.9s linear infinite;margin-bottom:14px;}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -160,6 +173,21 @@
     <div class="status" id="statusBox"></div>
   </div>
 
+  <div class="card" id="quickActionsCard">
+    <div class="quickGrid">
+      <div class="quickBtn" onclick="openOOD()"><div class="qIcon">&#8594;</div>OOD</div>
+      <div class="quickBtn" onclick="openLeaveSelf()"><div class="qIcon">&#128197;</div>Leave</div>
+      <div class="quickBtn" onclick="openMyReport()"><div class="qIcon">&#128202;</div>Report</div>
+      <div class="quickBtn" onclick="openWhatsNew()"><div class="qIcon">&#9733;</div>What's New</div>
+      <div class="quickBtn" onclick="openProfile()"><div class="qIcon">&#128100;</div>Profile</div>
+      <div class="quickBtn" onclick="openMovementHistory()"><div class="qIcon">&#128205;</div>Movement</div>
+      <div class="quickBtn" onclick="openAttendanceAdmin()"><div class="qIcon">&#9989;</div>Attendance</div>
+      <div class="quickBtn" onclick="openFAQ()"><div class="qIcon">&#10067;</div>FAQ</div>
+      <div class="quickBtn" onclick="openGrievance()"><div class="qIcon">&#128172;</div>Grievances</div>
+      <div class="quickBtn" onclick="openHelpdesk()"><div class="qIcon">&#9742;</div>Helpdesk</div>
+    </div>
+  </div>
+
   <div class="toggle" id="pendingToggle" style="display:none;"><a onclick="showPending()">A staff member still needs to complete their face - tap here</a></div>
   <div class="card" id="pendingCard" style="display:none;">
     <h3 style="margin:0 0 4px;font-size:16px;">Complete Your Face Registration</h3>
@@ -210,6 +238,120 @@
   <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
   <div class="toggle"><a href="admin.html">Open Admin / Reports panel â†’</a></div>
 </div>
+
+<div class="modal" id="oodModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('oodModal')">Close âœ•</div>
+    <h3>On Other Duty</h3>
+    <div id="oodOpenNote" class="small" style="margin-bottom:8px;"></div>
+    <div id="oodOutForm">
+      <label style="font-size:12px;font-weight:600;">Purpose</label>
+      <input id="oodPurpose" placeholder="e.g. Book delivery, bank work">
+      <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Destination</label>
+      <input id="oodDestination" placeholder="e.g. Taluk office">
+      <button class="btn-reg" onclick="submitOODOut()">Log Movement Out</button>
+    </div>
+    <div id="oodInForm" style="display:none;">
+      <button class="btn-reg" onclick="submitOODIn()">Log Return (Movement In)</button>
+    </div>
+    <div class="status" id="oodStatus"></div>
+  </div>
+</div>
+
+<div class="modal" id="leaveSelfModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('leaveSelfModal')">Close âœ•</div>
+    <h3>Mark Leave</h3>
+    <label style="font-size:12px;font-weight:600;">Date</label>
+    <input type="date" id="leaveSelfDate">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Remarks (optional)</label>
+    <input id="leaveSelfRemarks" placeholder="e.g. Casual leave">
+    <button class="btn-reg" onclick="submitLeaveSelf()">Submit Leave</button>
+    <div class="status" id="leaveSelfStatus"></div>
+  </div>
+</div>
+
+<div class="modal" id="reportModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('reportModal')">Close âœ•</div>
+    <h3>My Attendance Report</h3>
+    <div class="timerow">
+      <select id="reportMonth" onchange="loadMyReport()"></select>
+      <select id="reportYear" onchange="loadMyReport()"></select>
+    </div>
+    <table><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>S1</th><th>S2</th></tr></thead><tbody id="reportTbody"></tbody></table>
+  </div>
+</div>
+
+<div class="modal" id="profileModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('profileModal')">Close âœ•</div>
+    <h3>My Profile</h3>
+    <div id="profileBody"></div>
+  </div>
+</div>
+
+<div class="modal" id="helpdeskModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('helpdeskModal')">Close âœ•</div>
+    <h3>Helpdesk</h3>
+    <div class="small">For any issue with attendance, timing, or this app, contact your branch admin directly.</div>
+    <div class="profileRow"><span>Branch Honavar</span><b>9449247843</b></div>
+    <div class="profileRow"><span>Kumta Branch</span><b>9449247843</b></div>
+  </div>
+</div>
+
+<div class="modal" id="whatsNewModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('whatsNewModal')">Close âœ•</div>
+    <h3>What's New</h3>
+    <div class="profileRow"><span>Voice guidance</span><b>Added</b></div>
+    <div class="profileRow"><span>Two-session timing per staff</span><b>Added</b></div>
+    <div class="profileRow"><span>Auto holidays (Mon / 2nd Tue / 4th Sat)</span><b>Added</b></div>
+    <div class="profileRow"><span>Complete-your-face flow</span><b>Added</b></div>
+    <div class="profileRow"><span>Quick actions (this menu)</span><b>Added</b></div>
+  </div>
+</div>
+
+<div class="modal" id="movementModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('movementModal')">Close âœ•</div>
+    <h3>My Movement History (last 14 days)</h3>
+    <table><thead><tr><th>Date</th><th>Out</th><th>Purpose</th><th>In</th></tr></thead><tbody id="movementTbody"></tbody></table>
+  </div>
+</div>
+
+<div class="modal" id="attendanceAdminModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('attendanceAdminModal')">Close âœ•</div>
+    <h3>Mark Attendance for Others</h3>
+    <div class="small">Marking attendance for someone else requires admin access, to keep the geo/face verification meaningful. Open the Admin panel and use the Attendance tab to add leave or correct a record.</div>
+    <a href="admin.html" class="btn-reg" style="display:block;text-align:center;text-decoration:none;margin-top:12px;">Open Admin Panel</a>
+  </div>
+</div>
+
+<div class="modal" id="faqModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('faqModal')">Close âœ•</div>
+    <h3>FAQ</h3>
+    <div class="profileRow" style="display:block;"><b>Location fails to load?</b><div class="small">Allow location access in your browser/site settings, then reload.</div></div>
+    <div class="profileRow" style="display:block;"><b>Camera doesn't show?</b><div class="small">Allow camera access in your browser settings, then reload.</div></div>
+    <div class="profileRow" style="display:block;"><b>Forgot to check out?</b><div class="small">Contact your admin - they can review and correct it from the Admin panel.</div></div>
+    <div class="profileRow" style="display:block;border-bottom:none;"><b>Face not matching?</b><div class="small">Retry with good lighting, no cap/mask, holding the phone the way you did at registration.</div></div>
+  </div>
+</div>
+
+<div class="modal" id="grievanceModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('grievanceModal')">Close âœ•</div>
+    <h3>Grievances</h3>
+    <label style="font-size:12px;font-weight:600;">Your message</label>
+    <textarea id="grievanceMsg" rows="4" style="width:100%;padding:10px;border:1px solid #d4dad2;border-radius:9px;font-family:inherit;font-size:13px;margin-top:4px;" placeholder="Describe the issue..."></textarea>
+    <button class="btn-reg" onclick="submitGrievanceMsg()">Submit</button>
+    <div class="status" id="grievanceStatus"></div>
+  </div>
+</div>
+
 
 <script src="face-api.min.js"></script>
 <script>
@@ -267,6 +409,13 @@ const apiMarkAttendance = data => apiPost({ action: 'markAttendance', data });
 const apiRegisterStaff = data => apiPost({ action: 'registerStaff', data });
 const apiCompleteStaffFace = data => apiPost({ action: 'completeStaffFace', data });
 const apiGetAttendanceMatrix = (branch, fromDate, toDate) => apiPost({ action: 'getAttendanceMatrix', branch, fromDate, toDate });
+const apiGetOpenMovement = (branch, staffId) => apiPost({ action: 'getOpenMovement', branch, staffId });
+const apiLogMovementOut = data => apiPost({ action: 'logMovementOut', data });
+const apiLogMovementIn = data => apiPost({ action: 'logMovementIn', data });
+const apiMarkLeave = data => apiPost({ action: 'markLeave', data });
+const apiGetStaffOwnAttendance = (branch, staffId, fromDate, toDate) => apiPost({ action: 'getStaffOwnAttendance', branch, staffId, fromDate, toDate });
+const apiGetMovementLog = (branch, fromDate, toDate) => apiPost({ action: 'getMovementLog', branch, fromDate, toDate });
+const apiSubmitGrievance = data => apiPost({ action: 'submitGrievance', data });
 
 async function loadModels() {
   const loadingEl = document.getElementById('loading');
@@ -421,7 +570,14 @@ const API_FN = {
   markAttendance: apiMarkAttendance,
   registerStaff: apiRegisterStaff,
   completeStaffFace: apiCompleteStaffFace,
-  getAttendanceMatrix: apiGetAttendanceMatrix
+  getAttendanceMatrix: apiGetAttendanceMatrix,
+  getOpenMovement: apiGetOpenMovement,
+  logMovementOut: apiLogMovementOut,
+  logMovementIn: apiLogMovementIn,
+  markLeave: apiMarkLeave,
+  getStaffOwnAttendance: apiGetStaffOwnAttendance,
+  getMovementLog: apiGetMovementLog,
+  submitGrievance: apiSubmitGrievance
 };
 function callServer(fnName, ...args) { return API_FN[fnName](...args); }
 function setStatus(id, cls, msg) { const el = document.getElementById(id); el.className = 'status ' + cls; el.textContent = msg; }
@@ -533,6 +689,7 @@ async function submitAttendance(type) {
 
 function showRegister() {
   document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('quickActionsCard').style.display = 'none';
   document.getElementById('registerCard').style.display = 'block';
   document.getElementById('regBranchName').textContent = currentBranchName();
   startCamera('regVideo');
@@ -540,17 +697,165 @@ function showRegister() {
 function showCheckin() {
   document.getElementById('registerCard').style.display = 'none';
   document.getElementById('checkinCard').style.display = 'block';
+  document.getElementById('quickActionsCard').style.display = 'block';
 }
 function showPending() {
   document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('quickActionsCard').style.display = 'none';
   document.getElementById('pendingToggle').style.display = 'none';
   document.getElementById('pendingCard').style.display = 'block';
 }
 function hidePending() {
   document.getElementById('pendingCard').style.display = 'none';
   document.getElementById('checkinCard').style.display = 'block';
+  document.getElementById('quickActionsCard').style.display = 'block';
   document.getElementById('pendingToggle').style.display = 'block';
 }
+
+/* ---- Quick actions: OOD / Leave / Report / Profile / Helpdesk ---- */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function currentStaff() { return staffList.find(s => s.staffId === document.getElementById('staffSelect').value); }
+
+function openOOD() {
+  const s = currentStaff();
+  if (!s) return;
+  callServer('getOpenMovement', currentBranch(), s.staffId).then(open => {
+    document.getElementById('oodStatus').textContent = '';
+    if (open) {
+      document.getElementById('oodOpenNote').textContent = `Out since ${open.TimeOut} - ${open.Purpose || ''} (${open.Destination || ''})`;
+      document.getElementById('oodOutForm').style.display = 'none';
+      document.getElementById('oodInForm').style.display = 'block';
+    } else {
+      document.getElementById('oodOpenNote').textContent = '';
+      document.getElementById('oodOutForm').style.display = 'block';
+      document.getElementById('oodInForm').style.display = 'none';
+    }
+    openModal('oodModal');
+  });
+}
+function submitOODOut() {
+  const s = currentStaff(); if (!s) return;
+  callServer('logMovementOut', {
+    branch: currentBranch(), staffId: s.staffId, name: s.name, designation: s.designation,
+    purpose: document.getElementById('oodPurpose').value, destination: document.getElementById('oodDestination').value
+  }).then(() => { closeModal('oodModal'); setStatus('statusBox','ok','Movement logged - have a safe trip.'); })
+    .catch(err => { document.getElementById('oodStatus').textContent = err.message; });
+}
+function submitOODIn() {
+  const s = currentStaff(); if (!s) return;
+  callServer('logMovementIn', { branch: currentBranch(), staffId: s.staffId })
+    .then(() => { closeModal('oodModal'); setStatus('statusBox','ok','Welcome back - movement closed.'); })
+    .catch(err => { document.getElementById('oodStatus').textContent = err.message; });
+}
+
+function openLeaveSelf() {
+  const s = currentStaff(); if (!s) return;
+  document.getElementById('leaveSelfDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('leaveSelfStatus').textContent = '';
+  openModal('leaveSelfModal');
+}
+function submitLeaveSelf() {
+  const s = currentStaff(); if (!s) return;
+  callServer('markLeave', {
+    branch: currentBranch(), staffId: s.staffId, name: s.name, designation: s.designation,
+    date: document.getElementById('leaveSelfDate').value, remarks: document.getElementById('leaveSelfRemarks').value
+  }).then(() => { closeModal('leaveSelfModal'); setStatus('statusBox','ok','Leave marked for ' + document.getElementById('leaveSelfDate').value + '.'); })
+    .catch(err => { document.getElementById('leaveSelfStatus').textContent = err.message; });
+}
+
+function statusColor(s) {
+  if (s === 'P' || s === 'Checked Out') return '#0e6e64';
+  if (s === 'L') return '#b8862c';
+  if (s === 'A') return '#b0392b';
+  if (s === 'LV') return '#5b3fc0';
+  if (s === 'H') return '#c0692b';
+  if (s === 'WO') return '#888';
+  return '#333';
+}
+function openMyReport() {
+  const s = currentStaff(); if (!s) return;
+  const monthSel = document.getElementById('reportMonth');
+  const yearSel = document.getElementById('reportYear');
+  if (!monthSel.options.length) {
+    ['January','February','March','April','May','June','July','August','September','October','November','December']
+      .forEach((m, i) => monthSel.innerHTML += `<option value="${i+1}">${m}</option>`);
+    const nowY = new Date().getFullYear();
+    for (let y = nowY - 1; y <= nowY + 1; y++) yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+    const now = new Date();
+    monthSel.value = now.getMonth() + 1;
+    yearSel.value = now.getFullYear();
+  }
+  loadMyReport();
+  openModal('reportModal');
+}
+function loadMyReport() {
+  const s = currentStaff(); if (!s) return;
+  const month = parseInt(document.getElementById('reportMonth').value, 10);
+  const year = parseInt(document.getElementById('reportYear').value, 10);
+  const pad = n => String(n).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate();
+  const fromDate = `${year}-${pad(month)}-01`;
+  const toDate = `${year}-${pad(month)}-${pad(lastDay)}`;
+  callServer('getStaffOwnAttendance', currentBranch(), s.staffId, fromDate, toDate).then(rows => {
+    rows.sort((a,b) => a.Date < b.Date ? -1 : 1);
+    document.getElementById('reportTbody').innerHTML = rows.map(r => {
+      const checkIn = r.S1TimeIn || r.S2TimeIn || '-';
+      const checkOut = r.S2TimeOut || r.S1TimeOut || '-';
+      const s1 = r.S1StatusIn || '-';
+      const s2 = r.S2StatusIn || '-';
+      const day = r.Date.slice(8,10);
+      return `<tr><td>${day}</td><td>${checkIn}</td><td>${checkOut}</td>
+        <td style="color:${statusColor(s1)};font-weight:700;">${s1}</td>
+        <td style="color:${statusColor(s2)};font-weight:700;">${s2}</td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No records.</td></tr>';
+  });
+}
+
+function openProfile() {
+  const s = currentStaff(); if (!s) return;
+  document.getElementById('profileBody').innerHTML = `
+    <div class="profileRow"><span>Name</span><b>${s.name}</b></div>
+    <div class="profileRow"><span>Designation</span><b>${s.designation || '-'}</b></div>
+    <div class="profileRow"><span>Phone</span><b>${s.phone || '-'}</b></div>
+    <div class="profileRow"><span>Staff ID</span><b>${s.staffId}</b></div>
+    <div class="profileRow"><span>Session 1</span><b>${s.s1In||'-'} - ${s.s1Out||'-'}</b></div>
+    <div class="profileRow"><span>Session 2</span><b>${s.s2In||'-'} - ${s.s2Out||'-'}</b></div>`;
+  openModal('profileModal');
+}
+function openHelpdesk() { openModal('helpdeskModal'); }
+function openWhatsNew() { openModal('whatsNewModal'); }
+
+function openMovementHistory() {
+  const s = currentStaff(); if (!s) return;
+  const to = new Date(); const from = new Date(); from.setDate(from.getDate() - 13);
+  const fmt = d => d.toISOString().slice(0,10);
+  callServer('getMovementLog', currentBranch(), fmt(from), fmt(to)).then(rows => {
+    const mine = rows.filter(r => r.StaffID === s.staffId);
+    document.getElementById('movementTbody').innerHTML = mine.map(r => `
+      <tr><td>${r.Date}</td><td>${r.TimeOut}</td><td>${r.Purpose||''}</td><td>${r.TimeIn||'-'}</td></tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">No movement records.</td></tr>';
+    openModal('movementModal');
+  });
+}
+
+function openAttendanceAdmin() { openModal('attendanceAdminModal'); }
+function openFAQ() { openModal('faqModal'); }
+
+function openGrievance() {
+  document.getElementById('grievanceMsg').value = '';
+  document.getElementById('grievanceStatus').textContent = '';
+  openModal('grievanceModal');
+}
+function submitGrievanceMsg() {
+  const s = currentStaff(); if (!s) return;
+  const msg = document.getElementById('grievanceMsg').value.trim();
+  if (!msg) return;
+  callServer('submitGrievance', { branch: currentBranch(), staffId: s.staffId, name: s.name, message: msg })
+    .then(() => { closeModal('grievanceModal'); setStatus('statusBox','ok','Grievance submitted - your admin will follow up.'); })
+    .catch(err => { document.getElementById('grievanceStatus').textContent = err.message; });
+}
+
 async function captureAndRegister() {
   const name = document.getElementById('regName').value.trim();
   const designation = document.getElementById('regDesignation').value.trim();
