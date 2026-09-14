@@ -14,13 +14,13 @@
     --ink:#16263e; --ink-soft:#374863;
     --teal:#0e6e64; --teal-deep:#0a5750;
     --gold:#b8862c; --gold-deep:#8f6a20;
-    --bg:#eef1ec; --card:#ffffff; --line:#e1e5df;
+    --bg:#eaf2fb; --card:#ffffff; --line:#e1e5df;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',Arial,sans-serif;}
+  body{margin:0;background:linear-gradient(180deg,#dfeaf9 0%,#f8fafc 45%,#fbf3de 100%);color:var(--ink);font-family:'Inter',Arial,sans-serif;min-height:100vh;}
   h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
   .flagbar{height:4px;background:linear-gradient(90deg,#ff9933,#f4f2ea 50%,#128a4d);}
-  .headerRow{display:flex;align-items:center;gap:13px;}
+  .headerRow{display:flex;align-items:center;justify-content:center;gap:13px;}
   .logo-circle{width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,.55);background:#fff;}
   .logo-circle img{width:100%;height:100%;object-fit:cover;}
   .headtext{flex:1;min-width:0;}
@@ -93,7 +93,7 @@
 <div id="pinGate">
   <h2>Admin Access</h2>
   <p>Enter the BCL KARTAVYA admin PIN to continue.</p>
-  <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="••••">
+  <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="â€¢â€¢â€¢â€¢">
   <button onclick="tryPin()">Unlock</button>
   <div class="err" id="pinErr"></div>
 </div>
@@ -173,7 +173,7 @@
     </table>
   </div>
 
-  <div class="toggle"><a href="index.html">← back to check-in</a></div>
+  <div class="toggle"><a href="index.html">â† back to check-in</a></div>
 </div>
 
 <!-- Leave modal -->
@@ -318,7 +318,7 @@ function branchName() { return document.getElementById('branchSelect').selectedO
 
 function sessionCell(inT, outT, cls) {
   if (!inT && !outT) return '-';
-  return `<span class="${cls}">${inT||'-'} → ${outT||'-'}</span>`;
+  return `<span class="${cls}">${inT||'-'} â†’ ${outT||'-'}</span>`;
 }
 
 function render(rows) {
@@ -382,9 +382,9 @@ function loadStaffTab() {
     document.getElementById('staffTbody').innerHTML = list.map(s => `
       <tr>
         <td>${s.name}</td><td>${s.designation||''}</td><td>${s.phone||''}</td>
-        <td class="sessionCell"><span class="s1">${s.s1In||'-'} → ${s.s1Out||'-'}</span></td>
-        <td class="sessionCell"><span class="s2">${s.s2In||'-'} → ${s.s2Out||'-'}</span></td>
-        <td>${s.hasFace ? '✓' : '-'}</td>
+        <td class="sessionCell"><span class="s1">${s.s1In||'-'} â†’ ${s.s1Out||'-'}</span></td>
+        <td class="sessionCell"><span class="s2">${s.s2In||'-'} â†’ ${s.s2Out||'-'}</span></td>
+        <td>${s.hasFace ? 'âœ“' : '-'}</td>
         <td><button class="ghost" onclick="openTimingModal('${s.staffId}')">Edit timing</button></td>
       </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;">No staff yet.</td></tr>';
   }).catch(err => alert(err.message));
