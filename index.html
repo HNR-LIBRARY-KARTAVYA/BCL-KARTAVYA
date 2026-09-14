@@ -14,15 +14,15 @@
     --ink:#16263e; --ink-soft:#374863;
     --teal:#0e6e64; --teal-deep:#0a5750;
     --gold:#b8862c; --gold-deep:#8f6a20;
-    --bg:#eef1ec; --card:#ffffff;
+    --bg:#eaf2fb; --card:#ffffff;
     --line:#e1e5df;
     --ok:#0e6e64; --bad:#b0392b; --warn:#b8862c;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:linear-gradient(180deg,#dfeaf9 0%,#f8fafc 45%,#fbf3de 100%);color:var(--ink);font-family:'Inter',Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
   h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
   .flagbar{height:4px;background:linear-gradient(90deg,#ff9933,#f4f2ea 50%,#128a4d);}
-  .headerRow{display:flex;align-items:center;gap:13px;}
+  .headerRow{display:flex;align-items:center;justify-content:center;gap:13px;}
   .logo-circle{width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,.55);background:#fff;}
   .logo-circle img{width:100%;height:100%;object-fit:cover;}
   .headtext{flex:1;min-width:0;}
@@ -104,7 +104,7 @@
 <div class="flagbar"></div>
 <div class="card" id="setupCard" style="display:none;">
     <h3 style="margin:0 0 6px;font-size:16px;">Connect to BCL KARTAVYA backend</h3>
-    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy → Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
+    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy â†’ Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
     <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
     <button class="btn-reg" onclick="saveApiUrl()">Save &amp; Continue</button>
   </div>
@@ -204,11 +204,11 @@
     <canvas id="regCanvas" style="display:none;"></canvas>
     <button class="btn-reg" onclick="captureAndRegister()">Capture Face &amp; Register</button>
     <div class="status" id="regStatus"></div>
-    <div class="toggle"><a onclick="showCheckin()">← back to check-in</a></div>
+    <div class="toggle"><a onclick="showCheckin()">â† back to check-in</a></div>
   </div>
 
   <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
-  <div class="toggle"><a href="admin.html">Open Admin / Reports panel →</a></div>
+  <div class="toggle"><a href="admin.html">Open Admin / Reports panel â†’</a></div>
 </div>
 
 <script src="face-api.min.js"></script>
@@ -318,7 +318,7 @@ function getLocation() {
   if (!navigator.geolocation) { document.getElementById('locStatus').textContent = 'Geolocation not supported on this device.'; return; }
   navigator.geolocation.getCurrentPosition(pos => {
     currentPos = pos.coords;
-    document.getElementById('locStatus').textContent = 'Location captured (±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
+    document.getElementById('locStatus').textContent = 'Location captured (Â±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
     document.getElementById('locDot').classList.add('ready');
     setStep('stepLoc', 'done');
     setStep('stepFace', 'active');
