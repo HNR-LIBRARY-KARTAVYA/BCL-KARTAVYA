@@ -175,16 +175,16 @@
 
   <div class="card" id="quickActionsCard">
     <div class="quickGrid">
-      <div class="quickBtn" onclick="openOOD()"><div class="qIcon">&#8594;</div>OOD</div>
-      <div class="quickBtn" onclick="openLeaveSelf()"><div class="qIcon">&#128197;</div>Leave</div>
-      <div class="quickBtn" onclick="openMyReport()"><div class="qIcon">&#128202;</div>Report</div>
-      <div class="quickBtn" onclick="openWhatsNew()"><div class="qIcon">&#9733;</div>What's New</div>
-      <div class="quickBtn" onclick="openProfile()"><div class="qIcon">&#128100;</div>Profile</div>
-      <div class="quickBtn" onclick="openMovementHistory()"><div class="qIcon">&#128205;</div>Movement</div>
-      <div class="quickBtn" onclick="openAttendanceAdmin()"><div class="qIcon">&#9989;</div>Attendance</div>
-      <div class="quickBtn" onclick="openFAQ()"><div class="qIcon">&#10067;</div>FAQ</div>
-      <div class="quickBtn" onclick="openGrievance()"><div class="qIcon">&#128172;</div>Grievances</div>
-      <div class="quickBtn" onclick="openHelpdesk()"><div class="qIcon">&#9742;</div>Helpdesk</div>
+      <div class="quickBtn" onclick="openOOD()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>OOD</div>
+      <div class="quickBtn" onclick="openLeaveSelf()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>Leave</div>
+      <div class="quickBtn" onclick="openMyReport()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>Report</div>
+      <div class="quickBtn" onclick="openWhatsNew()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l2.6 6.8L21 11l-6.4 2.2L12 20l-2.6-6.8L3 11l6.4-2.2z"/></svg></div>What's New</div>
+      <div class="quickBtn" onclick="openProfile()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>Profile</div>
+      <div class="quickBtn" onclick="openMovementHistory()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg></div>Movement</div>
+      <div class="quickBtn" onclick="openAttendanceAdmin()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>Attendance</div>
+      <div class="quickBtn" onclick="openFAQ()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5" stroke-linecap="round"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg></div>FAQ</div>
+      <div class="quickBtn" onclick="openGrievance()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>Grievances</div>
+      <div class="quickBtn" onclick="openHelpdesk()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0118 0v6a2 2 0 01-2 2h-1v-7h3M3 18v-6h3v7H4a2 2 0 01-2-2z"/></svg></div>Helpdesk</div>
     </div>
   </div>
 
@@ -272,14 +272,14 @@
 </div>
 
 <div class="modal" id="reportModal">
-  <div class="modal-card">
+  <div class="modal-card" style="max-width:440px;">
     <div class="mclose" onclick="closeModal('reportModal')">Close âœ•</div>
     <h3>My Attendance Report</h3>
     <div class="timerow">
       <select id="reportMonth" onchange="loadMyReport()"></select>
       <select id="reportYear" onchange="loadMyReport()"></select>
     </div>
-    <table><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>S1</th><th>S2</th></tr></thead><tbody id="reportTbody"></tbody></table>
+    <table><thead><tr><th>Date</th><th>Session 1 (In-Out)</th><th>Session 2 (In-Out)</th><th>S1</th><th>S2</th></tr></thead><tbody id="reportTbody"></tbody></table>
   </div>
 </div>
 
@@ -800,12 +800,12 @@ function loadMyReport() {
   callServer('getStaffOwnAttendance', currentBranch(), s.staffId, fromDate, toDate).then(rows => {
     rows.sort((a,b) => a.Date < b.Date ? -1 : 1);
     document.getElementById('reportTbody').innerHTML = rows.map(r => {
-      const checkIn = r.S1TimeIn || r.S2TimeIn || '-';
-      const checkOut = r.S2TimeOut || r.S1TimeOut || '-';
+      const s1Range = (r.S1TimeIn || r.S1TimeOut) ? `${r.S1TimeIn||'-'} \u2192 ${r.S1TimeOut||'-'}` : '-';
+      const s2Range = (r.S2TimeIn || r.S2TimeOut) ? `${r.S2TimeIn||'-'} \u2192 ${r.S2TimeOut||'-'}` : '-';
       const s1 = r.S1StatusIn || '-';
       const s2 = r.S2StatusIn || '-';
       const day = r.Date.slice(8,10);
-      return `<tr><td>${day}</td><td>${checkIn}</td><td>${checkOut}</td>
+      return `<tr><td>${day}</td><td>${s1Range}</td><td>${s2Range}</td>
         <td style="color:${statusColor(s1)};font-weight:700;">${s1}</td>
         <td style="color:${statusColor(s2)};font-weight:700;">${s2}</td></tr>`;
     }).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No records.</td></tr>';
