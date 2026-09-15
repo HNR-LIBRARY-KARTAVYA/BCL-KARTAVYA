@@ -58,11 +58,18 @@
   .sessionTab .now-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin-right:5px;position:relative;top:-1px;}
   .sessionTab.s2cur .now-dot{background:var(--gold);}
 
-  video,canvas{width:100%;border-radius:11px;background:#0d1420;margin-top:12px;}
+  video,canvas{width:100%;border-radius:11px;background:#0d1420;margin-top:12px;aspect-ratio:3/4;object-fit:cover;}
   .cameraBox{position:relative;display:none;}
   .cameraBox.show{display:block;}
-  .faceGuide{position:absolute;left:50%;top:calc(50% + 6px);transform:translate(-50%,-50%);
-    width:46%;height:72%;border:3px dashed rgba(255,255,255,.75);border-radius:50%;pointer-events:none;}
+  .faceGuide{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
+    width:60%;height:42%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,0);}
+  .successOverlay{position:absolute;inset:0;background:rgba(14,110,100,.92);border-radius:11px;
+    display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px;}
+  .successOverlay.show{display:flex;}
+  .checkCircle{width:64px;height:64px;border-radius:50%;background:#fff;color:var(--teal);font-size:34px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;margin-bottom:10px;animation:popIn .35s ease-out;}
+  .successMsg{color:#fff;font-size:13.5px;font-weight:700;line-height:1.4;}
+  @keyframes popIn{0%{transform:scale(0.3);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
   .stepRow{display:flex;gap:8px;margin-top:12px;}
   .stepRow .step{flex:1;text-align:center;padding:7px 4px;border-radius:8px;background:#f4f6f2;font-size:10.5px;font-weight:700;color:#9aa39a;border:1px solid var(--line);transition:all .2s;}
   .stepRow .step .ic{display:block;font-size:13px;margin-bottom:2px;}
@@ -122,7 +129,7 @@
 <div class="flagbar"></div>
 <div class="card" id="setupCard" style="display:none;">
     <h3 style="margin:0 0 6px;font-size:16px;">Connect to BCL KARTAVYA backend</h3>
-    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy â†’ Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
+    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy -&gt; Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
     <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
     <button class="btn-reg" onclick="saveApiUrl()">Save &amp; Continue</button>
   </div>
@@ -173,6 +180,10 @@
     <div class="cameraBox" id="cameraBox">
       <video id="video" autoplay muted playsinline></video>
       <div class="faceGuide"></div>
+      <div class="successOverlay" id="successOverlay">
+        <div class="checkCircle">&#10003;</div>
+        <div class="successMsg" id="successMsg"></div>
+      </div>
     </div>
     <canvas id="canvas" style="display:none;"></canvas>
 
@@ -185,12 +196,12 @@
 
   <div class="card" id="quickActionsCard">
     <div class="quickGrid">
-      <div class="quickBtn" onclick="openOOD()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>OOD</div>
-      <div class="quickBtn" onclick="openLeaveSelf()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>Leave</div>
-      <div class="quickBtn" onclick="openMyReport()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>Report</div>
+      <div class="quickBtn" onclick="requirePin(openOOD)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>OOD</div>
+      <div class="quickBtn" onclick="requirePin(openLeaveSelf)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>Leave</div>
+      <div class="quickBtn" onclick="requirePin(openMyReport)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>Report</div>
       <div class="quickBtn" onclick="openWhatsNew()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l2.6 6.8L21 11l-6.4 2.2L12 20l-2.6-6.8L3 11l6.4-2.2z"/></svg></div>What's New</div>
-      <div class="quickBtn" onclick="openProfile()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>Profile</div>
-      <div class="quickBtn" onclick="openMovementHistory()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg></div>Movement</div>
+      <div class="quickBtn" onclick="requirePin(openProfile)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>Profile</div>
+      <div class="quickBtn" onclick="requirePin(openMovementHistory)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg></div>Movement</div>
       <div class="quickBtn" onclick="openAttendanceAdmin()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>Attendance</div>
       <div class="quickBtn" onclick="openFAQ()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5" stroke-linecap="round"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg></div>FAQ</div>
       <div class="quickBtn" onclick="openGrievance()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>Grievances</div>
@@ -242,16 +253,16 @@
     <canvas id="regCanvas" style="display:none;"></canvas>
     <button class="btn-reg" onclick="captureAndRegister()">Capture Face &amp; Register</button>
     <div class="status" id="regStatus"></div>
-    <div class="toggle"><a onclick="showCheckin()">â† back to check-in</a></div>
+    <div class="toggle"><a onclick="showCheckin()">&lt;- back to check-in</a></div>
   </div>
 
   <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
-  <div class="toggle"><a href="admin.html">Open Admin / Reports panel â†’</a></div>
+  <div class="toggle"><a href="admin.html">Open Admin / Reports panel -&gt;</a></div>
 </div>
 
 <div class="modal" id="oodModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('oodModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('oodModal')">Close X</div>
     <h3>On Other Duty</h3>
     <div id="oodOpenNote" class="small" style="margin-bottom:8px;"></div>
     <div id="oodOutForm">
@@ -270,7 +281,7 @@
 
 <div class="modal" id="leaveSelfModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('leaveSelfModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('leaveSelfModal')">Close X</div>
     <h3>Mark Leave</h3>
     <label style="font-size:12px;font-weight:600;">Date</label>
     <input type="date" id="leaveSelfDate">
@@ -283,7 +294,7 @@
 
 <div class="modal" id="reportModal">
   <div class="modal-card" style="max-width:440px;">
-    <div class="mclose" onclick="closeModal('reportModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('reportModal')">Close X</div>
     <h3>My Attendance Report</h3>
     <div class="timerow">
       <select id="reportMonth" onchange="loadMyReport()"></select>
@@ -295,15 +306,26 @@
 
 <div class="modal" id="profileModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('profileModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('profileModal')">Close X</div>
     <h3>My Profile</h3>
     <div id="profileBody"></div>
   </div>
 </div>
 
+<div class="modal" id="pinCheckModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="cancelPinCheck()">Close X</div>
+    <h3>Enter Your PIN</h3>
+    <div class="small" style="margin-bottom:8px;">This keeps your personal information private from other staff using this device.</div>
+    <input type="password" id="pinCheckInput" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" style="font-size:20px;text-align:center;letter-spacing:6px;">
+    <button class="btn-reg" onclick="submitPinCheck()">Continue</button>
+    <div class="status" id="pinCheckStatus"></div>
+  </div>
+</div>
+
 <div class="modal" id="helpdeskModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('helpdeskModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('helpdeskModal')">Close X</div>
     <h3>Helpdesk</h3>
     <div class="small">For any issue with attendance, timing, or this app, contact your branch admin directly.</div>
     <div class="profileRow"><span>Branch Honavar</span><b>9449247843</b></div>
@@ -313,7 +335,7 @@
 
 <div class="modal" id="whatsNewModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('whatsNewModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('whatsNewModal')">Close X</div>
     <h3>What's New</h3>
     <div class="profileRow"><span>Voice guidance</span><b>Added</b></div>
     <div class="profileRow"><span>Two-session timing per staff</span><b>Added</b></div>
@@ -325,7 +347,7 @@
 
 <div class="modal" id="movementModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('movementModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('movementModal')">Close X</div>
     <h3>My Movement History (last 14 days)</h3>
     <table><thead><tr><th>Date</th><th>Out</th><th>Purpose</th><th>In</th></tr></thead><tbody id="movementTbody"></tbody></table>
   </div>
@@ -333,7 +355,7 @@
 
 <div class="modal" id="attendanceAdminModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('attendanceAdminModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('attendanceAdminModal')">Close X</div>
     <h3>Mark Attendance for Others</h3>
     <div class="small">Marking attendance for someone else requires admin access, to keep the geo/face verification meaningful. Open the Admin panel and use the Attendance tab to add leave or correct a record.</div>
     <a href="admin.html" class="btn-reg" style="display:block;text-align:center;text-decoration:none;margin-top:12px;">Open Admin Panel</a>
@@ -342,7 +364,7 @@
 
 <div class="modal" id="faqModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('faqModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('faqModal')">Close X</div>
     <h3>FAQ</h3>
     <div class="profileRow" style="display:block;"><b>Location fails to load?</b><div class="small">Allow location access in your browser/site settings, then reload.</div></div>
     <div class="profileRow" style="display:block;"><b>Camera doesn't show?</b><div class="small">Allow camera access in your browser settings, then reload.</div></div>
@@ -353,7 +375,7 @@
 
 <div class="modal" id="grievanceModal">
   <div class="modal-card">
-    <div class="mclose" onclick="closeModal('grievanceModal')">Close âœ•</div>
+    <div class="mclose" onclick="closeModal('grievanceModal')">Close X</div>
     <h3>Grievances</h3>
     <label style="font-size:12px;font-weight:600;">Your message</label>
     <textarea id="grievanceMsg" rows="4" style="width:100%;padding:10px;border:1px solid #d4dad2;border-radius:9px;font-family:inherit;font-size:13px;margin-top:4px;" placeholder="Describe the issue..."></textarea>
@@ -415,6 +437,8 @@ async function apiPost(body) {
 const apiGetStaffList = branch => apiPost({ action: 'getStaffList', branch });
 const apiGetStaffDescriptor = (branch, staffId) => apiPost({ action: 'getStaffDescriptor', branch, staffId });
 const apiReverseGeocode = (lat, lng) => apiPost({ action: 'reverseGeocode', lat, lng });
+const apiCheckGeofence = (branch, lat, lng) => apiPost({ action: 'checkGeofence', branch, lat, lng });
+const apiCheckStaffPin = (branch, staffId, pin) => apiPost({ action: 'checkStaffPin', branch, staffId, pin });
 const apiMarkAttendance = data => apiPost({ action: 'markAttendance', data });
 const apiRegisterStaff = data => apiPost({ action: 'registerStaff', data });
 const apiCompleteStaffFace = data => apiPost({ action: 'completeStaffFace', data });
@@ -477,13 +501,29 @@ function getLocation() {
   if (!navigator.geolocation) { document.getElementById('locStatus').textContent = 'Geolocation not supported on this device.'; return; }
   navigator.geolocation.getCurrentPosition(pos => {
     currentPos = pos.coords;
-    document.getElementById('locStatus').textContent = 'Location captured (Â±' + Math.round(pos.coords.accuracy) + 'm accuracy).';
     document.getElementById('locDot').classList.add('ready');
-    setStep('stepLoc', 'done');
-    setStep('stepFace', 'active');
-    speak('Location success.');
-    startCamera('video');
-    showCamera();
+    document.getElementById('locStatus').innerHTML = 'Checking you are within the branch area...';
+    callServer('checkGeofence', currentBranch(), pos.coords.latitude, pos.coords.longitude).then(res => {
+      if (res.withinFence) {
+        document.getElementById('locStatus').textContent = 'Location captured (+/-' + Math.round(pos.coords.accuracy) + 'm accuracy, ' + res.distance + 'm from branch).';
+        setStep('stepLoc', 'done');
+        setStep('stepFace', 'active');
+        speak('Location success.');
+        startCamera('video');
+        showCamera();
+      } else {
+        document.getElementById('locStatus').innerHTML = `You are <b>${res.distance}m</b> away - need to be within ${res.radius}m of the branch. <a onclick="getLocation()" style="cursor:pointer;text-decoration:underline;">Retry location</a>`;
+        setStatus('statusBox', 'bad', `Too far from the branch (${res.distance}m away, need within ${res.radius}m). Move closer and retry location.`);
+      }
+    }).catch(() => {
+      // If the geofence check itself fails (network hiccup), fall back to letting them proceed -
+      // the final server-side check in markAttendance still protects against a false accept.
+      document.getElementById('locStatus').textContent = 'Location captured (+/-' + Math.round(pos.coords.accuracy) + 'm accuracy).';
+      setStep('stepLoc', 'done');
+      setStep('stepFace', 'active');
+      startCamera('video');
+      showCamera();
+    });
   }, () => { document.getElementById('locStatus').textContent = 'Location permission denied - required to mark attendance.'; },
   { enableHighAccuracy: true, timeout: 10000 });
 }
@@ -577,6 +617,8 @@ async function getDescriptor(canvas) {
 }
 const API_FN = {
   reverseGeocode: apiReverseGeocode,
+  checkGeofence: apiCheckGeofence,
+  checkStaffPin: apiCheckStaffPin,
   getStaffDescriptor: apiGetStaffDescriptor,
   markAttendance: apiMarkAttendance,
   registerStaff: apiRegisterStaff,
@@ -680,8 +722,12 @@ async function submitAttendance(type) {
     setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)`);
     setStep('stepDone', res.accepted ? 'done' : null);
     if (res.accepted) {
+      document.getElementById('successMsg').textContent = `${res.status} - ${res.time}`;
+      document.getElementById('successOverlay').classList.add('show');
       speak('Attendance taken successfully. Thank you. Good day.');
       resetAttempts();
+      await new Promise(r => setTimeout(r, 1800));
+      document.getElementById('successOverlay').classList.remove('show');
     } else {
       attemptsLeft = Math.max(0, attemptsLeft - 1);
       speak('Attendance not verified. You have ' + attemptsLeft + ' chances remaining.');
@@ -693,6 +739,7 @@ async function submitAttendance(type) {
     speak('Something went wrong. You have ' + attemptsLeft + ' chances remaining.');
   } finally {
     hideCamera();
+    document.getElementById('successOverlay').classList.remove('show');
     const vEl = document.getElementById('video');
     if (vEl.srcObject) { vEl.srcObject.getTracks().forEach(t => t.stop()); vEl.srcObject = null; }
   }
@@ -727,6 +774,32 @@ function hidePending() {
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function currentStaff() { return staffList.find(s => s.staffId === document.getElementById('staffSelect').value); }
+
+let pendingPinAction = null;
+function requirePin(actionFn) {
+  const s = currentStaff(); if (!s) return;
+  pendingPinAction = actionFn;
+  document.getElementById('pinCheckInput').value = '';
+  document.getElementById('pinCheckStatus').textContent = '';
+  document.getElementById('pinCheckStatus').className = 'status';
+  openModal('pinCheckModal');
+}
+function cancelPinCheck() { pendingPinAction = null; closeModal('pinCheckModal'); }
+function submitPinCheck() {
+  const s = currentStaff(); if (!s) return;
+  const pin = document.getElementById('pinCheckInput').value.trim();
+  callServer('checkStaffPin', currentBranch(), s.staffId, pin).then(ok => {
+    if (ok) {
+      closeModal('pinCheckModal');
+      const fn = pendingPinAction; pendingPinAction = null;
+      if (fn) fn();
+    } else {
+      document.getElementById('pinCheckStatus').className = 'status bad';
+      document.getElementById('pinCheckStatus').textContent = 'Incorrect PIN.';
+    }
+  });
+}
+document.getElementById('pinCheckInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitPinCheck(); });
 
 function openOOD() {
   const s = currentStaff();
@@ -793,10 +866,10 @@ function openMyReport() {
       .forEach((m, i) => monthSel.innerHTML += `<option value="${i+1}">${m}</option>`);
     const nowY = new Date().getFullYear();
     for (let y = nowY - 1; y <= nowY + 1; y++) yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-    const now = new Date();
-    monthSel.value = now.getMonth() + 1;
-    yearSel.value = now.getFullYear();
   }
+  const now = new Date();
+  monthSel.value = now.getMonth() + 1;
+  yearSel.value = now.getFullYear();
   loadMyReport();
   openModal('reportModal');
 }
