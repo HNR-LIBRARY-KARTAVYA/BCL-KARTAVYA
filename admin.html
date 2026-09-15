@@ -94,7 +94,7 @@
 <div id="pinGate">
   <h2>Admin Access</h2>
   <p>Enter the BCL KARTAVYA admin PIN to continue.</p>
-  <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="â€¢â€¢â€¢â€¢">
+  <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="****">
   <button onclick="tryPin()">Unlock</button>
   <div class="err" id="pinErr"></div>
 </div>
@@ -174,7 +174,7 @@
     </table>
   </div>
 
-  <div class="toggle"><a href="index.html">â† back to check-in</a></div>
+  <div class="toggle"><a href="index.html">&lt;- back to check-in</a></div>
 </div>
 
 <!-- Leave modal -->
@@ -244,6 +244,19 @@
     <div style="display:flex;gap:10px;margin-top:14px;">
       <button class="ghost" onclick="closeModal('timingModal')">Cancel</button>
       <button class="secondary" onclick="submitTimingEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="pinModal">
+  <div class="modal-card" style="max-width:340px;">
+    <h3>Set Personal PIN</h3>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;" id="pinStaffName"></div>
+    <div style="font-size:11px;color:#7a8579;margin-bottom:10px;">This PIN protects that staff member's own Report, Profile, and Movement history from being viewed by other staff on the same device. Defaults to the last 4 digits of their phone.</div>
+    <input type="text" id="newPinInput" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" style="font-size:20px;text-align:center;letter-spacing:6px;">
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghost" onclick="closeModal('pinModal')">Cancel</button>
+      <button class="secondary" onclick="submitPinSet()">Save</button>
     </div>
   </div>
 </div>
@@ -319,7 +332,7 @@ function branchName() { return document.getElementById('branchSelect').selectedO
 
 function sessionCell(inT, outT, cls) {
   if (!inT && !outT) return '-';
-  return `<span class="${cls}">${inT||'-'} â†’ ${outT||'-'}</span>`;
+  return `<span class="${cls}">${inT||'-'} -&gt; ${outT||'-'}</span>`;
 }
 
 function render(rows) {
@@ -383,10 +396,10 @@ function loadStaffTab() {
     document.getElementById('staffTbody').innerHTML = list.map(s => `
       <tr>
         <td>${s.name}</td><td>${s.designation||''}</td><td>${s.phone||''}</td>
-        <td class="sessionCell"><span class="s1">${s.s1In||'-'} â†’ ${s.s1Out||'-'}</span></td>
-        <td class="sessionCell"><span class="s2">${s.s2In||'-'} â†’ ${s.s2Out||'-'}</span></td>
-        <td>${s.hasFace ? 'âœ“' : '-'}</td>
-        <td><button class="ghost" onclick="openTimingModal('${s.staffId}')">Edit timing</button></td>
+        <td class="sessionCell"><span class="s1">${s.s1In||'-'} -&gt; ${s.s1Out||'-'}</span></td>
+        <td class="sessionCell"><span class="s2">${s.s2In||'-'} -&gt; ${s.s2Out||'-'}</span></td>
+        <td>${s.hasFace ? 'Yes' : '-'}</td>
+        <td><button class="ghost" onclick="openTimingModal('${s.staffId}')">Edit timing</button> <button class="ghost" onclick="openPinModal('${s.staffId}')">Set PIN</button></td>
       </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;">No staff yet.</td></tr>';
   }).catch(err => alert(err.message));
 }
@@ -423,6 +436,22 @@ function submitTimingEdit() {
       s2In: document.getElementById('tmS2In').value, s2Out: document.getElementById('tmS2Out').value
     } })
     .then(() => { closeModal('timingModal'); loadStaffTab(); }).catch(err => alert(err.message));
+}
+
+function openPinModal(staffId) {
+  const s = staffCache.find(x => x.staffId === staffId);
+  if (!s) return;
+  document.getElementById('pinStaffName').textContent = s.name + (s.designation ? ' - ' + s.designation : '');
+  document.getElementById('newPinInput').value = '';
+  document.getElementById('pinModal').dataset.staffId = staffId;
+  openModal('pinModal');
+}
+function submitPinSet() {
+  const staffId = document.getElementById('pinModal').dataset.staffId;
+  const pin = document.getElementById('newPinInput').value.trim();
+  if (!/^\d{4}$/.test(pin)) return alert('PIN must be exactly 4 digits.');
+  apiPost({ action: 'setStaffPin', branch: document.getElementById('branchSelect').value, staffId, pin })
+    .then(() => { closeModal('pinModal'); alert('PIN updated.'); }).catch(err => alert(err.message));
 }
 
 /* ---- Geofence ---- */
