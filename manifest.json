@@ -1,0 +1,13 @@
+{
+  "name": "BCL KARTAVYA - Staff Attendance",
+  "short_name": "BCL_KARTAVYA",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1ec",
+  "theme_color": "#16263e",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png" }
+  ]
+}

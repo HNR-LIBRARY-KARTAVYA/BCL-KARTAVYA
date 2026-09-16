@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>BCL KARTAVYA - Attendance</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#16263e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16263e; --ink-soft:#374863;
+    --teal:#0e6e64; --teal-deep:#0a5750;
+    --gold:#b8862c; --gold-deep:#8f6a20;
+    --bg:#eaf2fb; --card:#ffffff;
+    --line:#e1e5df;
+    --ok:#0e6e64; --bad:#b0392b; --warn:#b8862c;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:linear-gradient(180deg,#dfeaf9 0%,#f8fafc 45%,#fbf3de 100%);color:var(--ink);font-family:'Inter',Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
+  .flagbar{height:4px;background:linear-gradient(90deg,#ff9933,#f4f2ea 50%,#128a4d);}
+  .headerRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .headerLeft{display:flex;align-items:center;gap:13px;min-width:0;}
+  .headerRight{text-align:right;flex-shrink:0;margin-left:auto;}
+  .hrBranch{color:#e7d9b8;font-size:12.5px;font-weight:700;}
+  .hrClock{color:#c7d0de;font-size:11px;margin-top:2px;}
+  .logo-circle{width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,.55);background:#fff;}
+  .logo-circle img{width:100%;height:100%;object-fit:cover;}
+  .headtext{min-width:0;}
+  header{background:var(--ink);color:#fff;padding:18px 20px 16px;}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:.2px;}
+  header .sub{margin-top:3px;font-size:12.5px;color:#c7d0de;}
+  header .clock{margin-top:10px;font-size:13px;color:#e7d9b8;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:520px;margin:0 auto;padding:16px 16px 40px;}
+
+  .card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(22,38,62,.06),0 8px 24px rgba(22,38,62,.05);padding:18px;margin-bottom:16px;border:1px solid var(--line);}
+  label{font-size:11.5px;font-weight:600;color:var(--ink-soft);text-transform:none;letter-spacing:.1px;}
+  select,input{width:100%;padding:11px 12px;border:1px solid #d4dad2;border-radius:9px;font-size:14.5px;margin-top:6px;font-family:inherit;background:#fcfdfb;color:var(--ink);}
+  select:focus,input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+
+  .holidayBanner{display:none;background:#fbf3e3;border:1px solid #e9d3a0;color:#7a5a15;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px;}
+  .holidayBanner.show{display:block;}
+
+  .staffChip{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--ink-soft);background:#f4f6f2;border-radius:8px;padding:8px 10px;}
+  .staffChip b{color:var(--ink);}
+
+  .sessionTabs{display:flex;gap:8px;margin:14px 0 4px;}
+  .sessionTab{flex:1;text-align:center;padding:9px 6px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);color:var(--ink-soft);background:#fbfbf9;transition:all .15s;}
+  .sessionTab .t{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:2px;}
+  .sessionTab.active-s1{border-color:var(--teal);color:var(--teal-deep);background:#e9f5f2;}
+  .sessionTab.active-s2{border-color:var(--gold);color:var(--gold-deep);background:#fbf1de;}
+  .sessionTab.current{box-shadow:0 0 0 3px rgba(14,110,100,.12);}
+  .sessionTab.current.s2cur{box-shadow:0 0 0 3px rgba(184,134,44,.14);}
+  .sessionTab .now-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin-right:5px;position:relative;top:-1px;}
+  .sessionTab.s2cur .now-dot{background:var(--gold);}
+
+  video,canvas{width:100%;border-radius:0;background:#0d1420;margin-top:12px;aspect-ratio:3/4;object-fit:cover;display:block;}
+  .cameraBox{position:relative;display:none;}
+  .cameraBox.show{display:block;}
+  .faceGuide{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
+    width:60%;height:42%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,.6);}
+  .successOverlay{position:absolute;inset:0;background:rgba(14,110,100,.92);border-radius:11px;
+    display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px;}
+  .successOverlay.show{display:flex;}
+  .checkCircle{width:64px;height:64px;border-radius:50%;background:#fff;color:var(--teal);font-size:34px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;margin-bottom:10px;animation:popIn .35s ease-out;}
+  .successMsg{color:#fff;font-size:13.5px;font-weight:700;line-height:1.4;}
+  @keyframes popIn{0%{transform:scale(0.3);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+  .stepRow{display:flex;gap:8px;margin-top:12px;}
+  .stepRow .step{flex:1;text-align:center;padding:7px 4px;border-radius:8px;background:#f4f6f2;font-size:10.5px;font-weight:700;color:#9aa39a;border:1px solid var(--line);transition:all .2s;}
+  .stepRow .step .ic{display:block;font-size:13px;margin-bottom:2px;}
+  .stepRow .step.active{background:#eef2f8;color:#2a4568;border-color:#c9d6e8;}
+  .stepRow .step.done{background:#e7f5f1;color:var(--teal-deep);border-color:#bfe4dc;}
+  .pendingBadge{display:none;font-size:9px;font-weight:800;letter-spacing:.3px;background:#1e9e5a;color:#fff;border-radius:5px;padding:1px 6px;margin-top:4px;}
+  .sessionTab.current .pendingBadge{display:inline-block;}
+  .locrow{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:#6b7a68;}
+  .locrow .dot{width:7px;height:7px;border-radius:50%;background:#c9c9c9;flex-shrink:0;}
+  .locrow .dot.ready{background:var(--teal);}
+
+  .btnrow{display:flex;gap:10px;margin-top:14px;}
+  button{border:none;border-radius:9px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:12px;}
+  .btnrow button{flex:1;}
+  .btn-in{background:var(--teal);color:#fff;}
+  .btn-in:hover{background:var(--teal-deep);}
+  .btn-out{background:#c0392b;color:#fff;}
+  .btn-out:hover{background:#a52f22;}
+  .btn-reg{background:var(--ink);color:#fff;width:100%;margin-top:12px;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+
+  .status{margin-top:14px;padding:12px 14px;border-radius:9px;font-size:13.5px;font-weight:600;display:none;line-height:1.4;}
+  .status.ok{background:#e7f5f1;color:var(--ok);display:block;}
+  .status.bad{background:#fbeae7;color:var(--bad);display:block;}
+  .status.info{background:#eef2f8;color:#2a4568;display:block;}
+  .small{font-size:11px;color:#8a938a;margin-top:6px;}
+
+  .toggle{text-align:center;margin-top:10px;}
+  .toggle a{font-size:12.5px;color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+
+  .quickGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px;text-align:center;}
+  .quickBtn{cursor:pointer;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+  .quickBtn .qIcon{width:46px;height:46px;margin:0 auto 6px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--ink));
+    color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(22,38,62,.18);}
+  .modal{position:fixed;inset:0;background:rgba(22,38,62,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:16px;}
+  .modal.show{display:flex;}
+  .modal-card{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;}
+  .modal-card h3{margin:0 0 10px;font-size:16px;font-family:'Fraunces',Georgia,serif;}
+  .modal-card .mclose{text-align:right;font-size:12px;color:var(--ink-soft);cursor:pointer;margin-bottom:4px;}
+  .modal-card table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}
+  .modal-card th,.modal-card td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;}
+  .profileRow{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .profileRow b{color:var(--ink);}
+  #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:99;text-align:center;padding:20px;}
+  #loading .spinner{width:34px;height:34px;border-radius:50%;border:3px solid #d7ddd2;border-top-color:var(--teal);animation:spin 0.9s linear infinite;margin-bottom:14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading .msg{font-size:13.5px;color:var(--ink-soft);max-width:280px;}
+
+  .timerow{display:flex;gap:10px;}
+  .timerow>div{flex:1;}
+  .sessionBlock{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;}
+  .sessionBlock h4{margin:0 0 8px;font-size:12.5px;font-family:'Inter';font-weight:700;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><div class="msg">Loading face verification model...</div></div>
+<div class="flagbar"></div>
+<div class="card" id="setupCard" style="display:none;">
+    <h3 style="margin:0 0 6px;font-size:16px;">Connect to BCL KARTAVYA backend</h3>
+    <div class="small" style="margin-bottom:8px;">Paste the Apps Script Web App URL from your deployment (Deploy -&gt; Manage deployments - it ends in <code>/exec</code>). This is stored only on this device.</div>
+    <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+    <button class="btn-reg" onclick="saveApiUrl()">Save &amp; Continue</button>
+  </div>
+<header class="headerRow">
+  <div class="headerLeft">
+    <div class="logo-circle"><img src="data:image/jpeg;base64,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" alt="District Central Library, Karwar logo"></div>
+    <div class="headtext">
+      <h1>BCL KARTAVYA</h1>
+      <div class="sub">Geo &amp; Face-Verified Staff Attendance</div>
+    </div>
+  </div>
+  <div class="headerRight">
+    <div class="hrBranch" id="headerBranchName">Branch Honavar</div>
+    <div class="hrClock" id="clockLine">-</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="holidayBanner" id="holidayBanner"></div>
+
+  <div class="card">
+    <label>Branch</label>
+    <select id="branchSelect" onchange="onBranchChange()">
+      <option value="HNR">Branch Honavar</option>
+      <option value="KUMT">Kumta Branch</option>
+    </select>
+  </div>
+
+  <div class="card" id="checkinCard">
+    <label>Staff Member</label>
+    <select id="staffSelect"></select>
+    <div class="staffChip" id="staffChip" style="display:none;"></div>
+
+    <div class="sessionTabs">
+      <div class="sessionTab active-s1" id="tabS1" onclick="speak('Session 1'); selectSession(1);">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
+      <div class="sessionTab" id="tabS2" onclick="speak('Session 2'); selectSession(2);">Session 2<span class="t" id="tabS2Time">evening</span><span class="pendingBadge">DUE NOW</span></div>
+    </div>
+
+    <div class="stepRow">
+      <div class="step" id="stepLoc"><span class="ic">1</span>Location</div>
+      <div class="step" id="stepFace"><span class="ic">2</span>Face</div>
+      <div class="step" id="stepDone"><span class="ic">3</span>Attendance</div>
+    </div>
+
+    <div class="locrow"><span class="dot" id="locDot"></span><span id="locStatus">Location is checked when you press Check In or Check Out.</span></div>
+
+    <div class="cameraBox" id="cameraBox">
+      <video id="video" autoplay muted playsinline></video>
+      <div class="faceGuide"></div>
+      <div class="successOverlay" id="successOverlay">
+        <div class="checkCircle">&#10003;</div>
+        <div class="successMsg" id="successMsg"></div>
+      </div>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <div class="btnrow">
+      <button class="btn-in" onclick="submitAttendance('in')">Check In</button>
+      <button class="btn-out" onclick="submitAttendance('out')">Check Out</button>
+    </div>
+    <div class="status" id="statusBox"></div>
+  </div>
+
+  <div class="card" id="quickActionsCard">
+    <div class="quickGrid">
+      <div class="quickBtn" onclick="requirePin(openOOD)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>OOD</div>
+      <div class="quickBtn" onclick="requirePin(openLeaveSelf)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>Leave</div>
+      <div class="quickBtn" onclick="requirePin(openMyReport)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>Report</div>
+      <div class="quickBtn" onclick="openWhatsNew()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l2.6 6.8L21 11l-6.4 2.2L12 20l-2.6-6.8L3 11l6.4-2.2z"/></svg></div>What's New</div>
+      <div class="quickBtn" onclick="requirePin(openProfile)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>Profile</div>
+      <div class="quickBtn" onclick="requirePin(openMovementHistory)"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg></div>Movement</div>
+      <div class="quickBtn" onclick="openAttendanceAdmin()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>Attendance</div>
+      <div class="quickBtn" onclick="openFAQ()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5" stroke-linecap="round"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg></div>FAQ</div>
+      <div class="quickBtn" onclick="openGrievance()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>Grievances</div>
+      <div class="quickBtn" onclick="openHelpdesk()"><div class="qIcon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0118 0v6a2 2 0 01-2 2h-1v-7h3M3 18v-6h3v7H4a2 2 0 01-2-2z"/></svg></div>Helpdesk</div>
+    </div>
+  </div>
+
+  <div class="toggle" id="pendingToggle" style="display:none;"><a onclick="showPending()">A staff member still needs to complete their face - tap here</a></div>
+  <div class="card" id="pendingCard" style="display:none;">
+    <h3 style="margin:0 0 4px;font-size:16px;">Complete Your Face Registration</h3>
+    <div class="small" style="margin-bottom:10px;">Your admin has already added you with your name and timing. Pick your name and capture your face to finish - no need to fill the form again.</div>
+    <select id="pendingSelect"></select>
+    <video id="pendVideo" autoplay muted playsinline style="margin-top:12px;"></video>
+    <canvas id="pendCanvas" style="display:none;"></canvas>
+    <button class="btn-reg" onclick="captureAndCompletePending()">Capture My Face</button>
+    <div class="status" id="pendStatus"></div>
+    <div class="toggle"><a onclick="hidePending()">back to check-in</a></div>
+  </div>
+
+  <div class="toggle"><a onclick="showRegister()">+ Register a new staff face (admin/first-time setup)</a></div>
+
+  <div class="card" id="registerCard" style="display:none;">
+    <h3 style="margin:0 0 4px;font-size:17px;">Register Staff</h3>
+    <div class="small">Registering under: <b id="regBranchName"></b></div>
+    <label style="margin-top:10px;display:block;">Full Name</label>
+    <input id="regName" placeholder="e.g. Ganesh Naik">
+    <label style="margin-top:8px;display:block;">Designation</label>
+    <input id="regDesignation" placeholder="e.g. Library Assistant">
+    <label style="margin-top:8px;display:block;">Phone</label>
+    <input id="regPhone" placeholder="10-digit mobile">
+
+    <div class="sessionBlock">
+      <h4>Session 1 (morning)</h4>
+      <div class="timerow">
+        <div><label>In</label><input type="time" id="regS1In" value="08:00"></div>
+        <div><label>Out</label><input type="time" id="regS1Out" value="11:30"></div>
+      </div>
+    </div>
+    <div class="sessionBlock">
+      <h4>Session 2 (evening)</h4>
+      <div class="timerow">
+        <div><label>In</label><input type="time" id="regS2In" value="16:00"></div>
+        <div><label>Out</label><input type="time" id="regS2Out" value="18:30"></div>
+      </div>
+    </div>
+    <div class="small">Each staff member's timing can be set individually - no fixed branch schedule. Monday is the weekly off; second Tuesday and fourth Saturday are holidays for everyone automatically.</div>
+
+    <video id="regVideo" autoplay muted playsinline style="margin-top:12px;"></video>
+    <canvas id="regCanvas" style="display:none;"></canvas>
+    <button class="btn-reg" onclick="captureAndRegister()">Capture Face &amp; Register</button>
+    <div class="status" id="regStatus"></div>
+    <div class="toggle"><a onclick="showCheckin()">&lt;- back to check-in</a></div>
+  </div>
+
+  <div class="toggle"><a onclick="changeApiUrl()">Change backend URL</a></div>
+  <div class="toggle"><a href="admin.html">Open Admin / Reports panel -&gt;</a></div>
+</div>
+
+<div class="modal" id="oodModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('oodModal')">Close X</div>
+    <h3>On Other Duty</h3>
+    <div id="oodOpenNote" class="small" style="margin-bottom:8px;"></div>
+    <div id="oodOutForm">
+      <label style="font-size:12px;font-weight:600;">Purpose</label>
+      <input id="oodPurpose" placeholder="e.g. Book delivery, bank work">
+      <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Destination</label>
+      <input id="oodDestination" placeholder="e.g. Taluk office">
+      <button class="btn-reg" onclick="submitOODOut()">Log Movement Out</button>
+    </div>
+    <div id="oodInForm" style="display:none;">
+      <button class="btn-reg" onclick="submitOODIn()">Log Return (Movement In)</button>
+    </div>
+    <div class="status" id="oodStatus"></div>
+  </div>
+</div>
+
+<div class="modal" id="leaveSelfModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('leaveSelfModal')">Close X</div>
+    <h3>Mark Leave</h3>
+    <label style="font-size:12px;font-weight:600;">Date</label>
+    <input type="date" id="leaveSelfDate">
+    <label style="font-size:12px;font-weight:600;margin-top:8px;display:block;">Remarks (optional)</label>
+    <input id="leaveSelfRemarks" placeholder="e.g. Casual leave">
+    <button class="btn-reg" onclick="submitLeaveSelf()">Submit Leave</button>
+    <div class="status" id="leaveSelfStatus"></div>
+  </div>
+</div>
+
+<div class="modal" id="reportModal">
+  <div class="modal-card" style="max-width:440px;">
+    <div class="mclose" onclick="closeModal('reportModal')">Close X</div>
+    <h3>My Attendance Report</h3>
+    <div class="timerow">
+      <select id="reportMonth" onchange="loadMyReport()"></select>
+      <select id="reportYear" onchange="loadMyReport()"></select>
+    </div>
+    <table><thead><tr><th>Date</th><th>Session 1 (In-Out)</th><th>Session 2 (In-Out)</th><th>S1</th><th>S2</th></tr></thead><tbody id="reportTbody"></tbody></table>
+  </div>
+</div>
+
+<div class="modal" id="profileModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('profileModal')">Close X</div>
+    <h3>My Profile</h3>
+    <div id="profileBody"></div>
+  </div>
+</div>
+
+<div class="modal" id="pinCheckModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="cancelPinCheck()">Close X</div>
+    <h3>Enter Your PIN</h3>
+    <div class="small" style="margin-bottom:8px;">This keeps your personal information private from other staff using this device.</div>
+    <input type="password" id="pinCheckInput" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" style="font-size:20px;text-align:center;letter-spacing:6px;">
+    <button class="btn-reg" onclick="submitPinCheck()">Continue</button>
+    <div class="status" id="pinCheckStatus"></div>
+  </div>
+</div>
+
+<div class="modal" id="helpdeskModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('helpdeskModal')">Close X</div>
+    <h3>Helpdesk</h3>
+    <div class="small">For any issue with attendance, timing, or this app, contact your branch admin directly.</div>
+    <div class="profileRow"><span>Branch Honavar</span><b>9449247843</b></div>
+    <div class="profileRow"><span>Kumta Branch</span><b>9449247843</b></div>
+  </div>
+</div>
+
+<div class="modal" id="whatsNewModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('whatsNewModal')">Close X</div>
+    <h3>What's New</h3>
+    <div class="profileRow"><span>Voice guidance</span><b>Added</b></div>
+    <div class="profileRow"><span>Two-session timing per staff</span><b>Added</b></div>
+    <div class="profileRow"><span>Auto holidays (Mon / 2nd Tue / 4th Sat)</span><b>Added</b></div>
+    <div class="profileRow"><span>Complete-your-face flow</span><b>Added</b></div>
+    <div class="profileRow"><span>Quick actions (this menu)</span><b>Added</b></div>
+  </div>
+</div>
+
+<div class="modal" id="movementModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('movementModal')">Close X</div>
+    <h3>My Movement History (last 14 days)</h3>
+    <table><thead><tr><th>Date</th><th>Out</th><th>Purpose</th><th>In</th></tr></thead><tbody id="movementTbody"></tbody></table>
+  </div>
+</div>
+
+<div class="modal" id="attendanceAdminModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('attendanceAdminModal')">Close X</div>
+    <h3>Mark Attendance for Others</h3>
+    <div class="small">Marking attendance for someone else requires admin access, to keep the geo/face verification meaningful. Open the Admin panel and use the Attendance tab to add leave or correct a record.</div>
+    <a href="admin.html" class="btn-reg" style="display:block;text-align:center;text-decoration:none;margin-top:12px;">Open Admin Panel</a>
+  </div>
+</div>
+
+<div class="modal" id="faqModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('faqModal')">Close X</div>
+    <h3>FAQ</h3>
+    <div class="profileRow" style="display:block;"><b>Location fails to load?</b><div class="small">Allow location access in your browser/site settings, then reload.</div></div>
+    <div class="profileRow" style="display:block;"><b>Camera doesn't show?</b><div class="small">Allow camera access in your browser settings, then reload.</div></div>
+    <div class="profileRow" style="display:block;"><b>Forgot to check out?</b><div class="small">Contact your admin - they can review and correct it from the Admin panel.</div></div>
+    <div class="profileRow" style="display:block;border-bottom:none;"><b>Face not matching?</b><div class="small">Retry with good lighting, no cap/mask, holding the phone the way you did at registration.</div></div>
+  </div>
+</div>
+
+<div class="modal" id="grievanceModal">
+  <div class="modal-card">
+    <div class="mclose" onclick="closeModal('grievanceModal')">Close X</div>
+    <h3>Grievances</h3>
+    <label style="font-size:12px;font-weight:600;">Your message</label>
+    <textarea id="grievanceMsg" rows="4" style="width:100%;padding:10px;border:1px solid #d4dad2;border-radius:9px;font-family:inherit;font-size:13px;margin-top:4px;" placeholder="Describe the issue..."></textarea>
+    <button class="btn-reg" onclick="submitGrievanceMsg()">Submit</button>
+    <div class="status" id="grievanceStatus"></div>
+  </div>
+</div>
+
+
+<script src="face-api.min.js"></script>
+<script>
+const MODEL_URLS = [
+  'models',
+  'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights',
+  'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights',
+  'https://unpkg.com/face-api.js@0.22.2/weights'
+];
+let staffList = [];
+let currentPos = null;
+let currentSession = 1;
+let attemptsLeft = 5;
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95; u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function branchSpokenName(key) {
+  return key === 'KUMT'
+    ? 'D C L Karwar Branch Library Kumta'
+    : 'D C L Karwar Branch Library Honavar';
+}
+function speakWelcome() {
+  speak('Welcome to ' + branchSpokenName(currentBranch()) + '. Library Kartavya.');
+}
+function resetAttempts() { attemptsLeft = 5; }
+let API_URL = localStorage.getItem('bcl_kartavya_api_url') || '';
+
+function saveApiUrl() {
+  const v = document.getElementById('apiUrlInput').value.trim();
+  if (!v.startsWith('https://script.google.com/')) { alert('Paste the full Apps Script web app URL (ends in /exec).'); return; }
+  localStorage.setItem('bcl_kartavya_api_url', v); API_URL = v;
+  document.getElementById('setupCard').style.display = 'none';
+  boot();
+}
+function changeApiUrl() {
+  document.getElementById('apiUrlInput').value = API_URL;
+  document.getElementById('setupCard').style.display = 'block';
+}
+async function apiPost(body) {
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Server error');
+  return json.data;
+}
+const apiGetStaffList = branch => apiPost({ action: 'getStaffList', branch });
+const apiGetStaffDescriptor = (branch, staffId) => apiPost({ action: 'getStaffDescriptor', branch, staffId });
+const apiReverseGeocode = (lat, lng) => apiPost({ action: 'reverseGeocode', lat, lng });
+const apiCheckGeofence = (branch, lat, lng) => apiPost({ action: 'checkGeofence', branch, lat, lng });
+const apiCheckStaffPin = (branch, staffId, pin) => apiPost({ action: 'checkStaffPin', branch, staffId, pin });
+const apiMarkAttendance = data => apiPost({ action: 'markAttendance', data });
+const apiRegisterStaff = data => apiPost({ action: 'registerStaff', data });
+const apiCompleteStaffFace = data => apiPost({ action: 'completeStaffFace', data });
+const apiGetAttendanceMatrix = (branch, fromDate, toDate) => apiPost({ action: 'getAttendanceMatrix', branch, fromDate, toDate });
+const apiGetOpenMovement = (branch, staffId) => apiPost({ action: 'getOpenMovement', branch, staffId });
+const apiLogMovementOut = data => apiPost({ action: 'logMovementOut', data });
+const apiLogMovementIn = data => apiPost({ action: 'logMovementIn', data });
+const apiMarkLeave = data => apiPost({ action: 'markLeave', data });
+const apiGetStaffOwnAttendance = (branch, staffId, fromDate, toDate) => apiPost({ action: 'getStaffOwnAttendance', branch, staffId, fromDate, toDate });
+const apiGetMovementLog = (branch, fromDate, toDate) => apiPost({ action: 'getMovementLog', branch, fromDate, toDate });
+const apiSubmitGrievance = data => apiPost({ action: 'submitGrievance', data });
+
+async function loadModels() {
+  const loadingEl = document.getElementById('loading');
+  const msg = loadingEl.querySelector('.msg');
+  const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('Timed out')), ms))]);
+  let lastErr = null;
+  for (const url of MODEL_URLS) {
+    try {
+      msg.textContent = 'Loading face verification model... (first time only, ~8MB)';
+      await timeout(faceapi.nets.tinyFaceDetector.loadFromUri(url), 25000);
+      msg.textContent = 'Loading face verification model... (2/3)';
+      await timeout(faceapi.nets.faceLandmark68Net.loadFromUri(url), 25000);
+      msg.textContent = 'Loading face verification model... (3/3)';
+      await timeout(faceapi.nets.faceRecognitionNet.loadFromUri(url), 25000);
+      loadingEl.style.display = 'none';
+      return;
+    } catch (err) { lastErr = err; }
+  }
+  loadingEl.innerHTML = `
+    <div style="max-width:300px;">
+      <div style="font-weight:700;color:var(--bad);margin-bottom:8px;">Could not load the face model.</div>
+      <div style="font-size:13px;color:#555;margin-bottom:14px;">
+        This usually means a slow or blocked internet connection on this device.
+        Try switching to Wi-Fi, or a different network, then retry.
+      </div>
+      <button onclick="location.reload()" style="padding:10px 18px;border:none;border-radius:9px;background:var(--ink);color:#fff;font-weight:700;">Retry</button>
+    </div>`;
+}
+function startCamera(videoId) {
+  const video = document.getElementById(videoId);
+  try {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      .then(stream => video.srcObject = stream)
+      .catch(() => setStatus('statusBox', 'bad', 'Camera permission denied. Allow camera access to mark attendance.'));
+  } catch (err) {
+    setStatus('statusBox', 'bad', 'Camera is blocked in this window. If this keeps happening, open the GitHub Pages link instead of the script.google.com link.');
+  }
+}
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+}
+function showCamera() { document.getElementById('cameraBox').classList.add('show'); }
+function hideCamera() { document.getElementById('cameraBox').classList.remove('show'); }
+
+function getLocation() {
+  setStep('stepLoc', 'active');
+  if (!navigator.geolocation) { document.getElementById('locStatus').textContent = 'Geolocation not supported on this device.'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    currentPos = pos.coords;
+    document.getElementById('locDot').classList.add('ready');
+    document.getElementById('locStatus').innerHTML = 'Checking you are within the branch area...';
+    callServer('checkGeofence', currentBranch(), pos.coords.latitude, pos.coords.longitude).then(res => {
+      if (res.withinFence) {
+        document.getElementById('locStatus').textContent = 'Location captured (+/-' + Math.round(pos.coords.accuracy) + 'm accuracy, ' + res.distance + 'm from branch).';
+        setStep('stepLoc', 'done');
+      } else {
+        document.getElementById('locStatus').innerHTML = `You are <b>${res.distance}m</b> away - need to be within ${res.radius}m of the branch. <a onclick="getLocation()" style="cursor:pointer;text-decoration:underline;">Retry location</a>`;
+      }
+    }).catch(() => {
+      document.getElementById('locStatus').textContent = 'Location captured (+/-' + Math.round(pos.coords.accuracy) + 'm accuracy).';
+      setStep('stepLoc', 'done');
+    });
+  }, () => { document.getElementById('locStatus').textContent = 'Location permission denied - required to mark attendance.'; },
+  { enableHighAccuracy: true, timeout: 10000 });
+}
+function fetchLocationOnly() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => { currentPos = pos.coords; }, () => {}, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function currentBranch() { return document.getElementById('branchSelect').value; }
+function currentBranchName() { return document.getElementById('branchSelect').selectedOptions[0].text; }
+
+function onBranchChange() {
+  document.getElementById('regBranchName').textContent = currentBranchName();
+  document.getElementById('headerBranchName').textContent = currentBranchName();
+  loadStaff();
+  speakWelcome();
+}
+
+function loadStaff() {
+  if (!API_URL) return;
+  apiGetStaffList(currentBranch()).then(list => {
+    staffList = list.filter(s => s.active && s.hasFace);
+    const sel = document.getElementById('staffSelect');
+    sel.innerHTML = staffList.map(s => `<option value="${s.staffId}">${s.name}</option>`).join('');
+    updateStaffChip();
+
+    const pending = list.filter(s => s.active && !s.hasFace);
+    const pendToggle = document.getElementById('pendingToggle');
+    if (pending.length) {
+      pendToggle.style.display = 'block';
+      pendToggle.querySelector('a').textContent = pending.length === 1
+        ? `${pending[0].name} still needs to complete their face - tap here`
+        : `${pending.length} staff still need to complete their face - tap here`;
+      document.getElementById('pendingSelect').innerHTML = pending.map(s => `<option value="${s.staffId}">${s.name}</option>`).join('');
+    } else {
+      pendToggle.style.display = 'none';
+      document.getElementById('pendingCard').style.display = 'none';
+    }
+  }).catch(err => setStatus('statusBox','bad','Could not load staff list: ' + err.message));
+}
+function updateStaffChip() {
+  const s = staffList.find(x => x.staffId === document.getElementById('staffSelect').value);
+  const chip = document.getElementById('staffChip');
+  if (!s) { chip.style.display = 'none'; return; }
+  chip.style.display = 'flex';
+  chip.innerHTML = `<span>${s.designation || 'Staff'}</span><span>S1 <b>${s.s1In||'-'}-${s.s1Out||'-'}</b> | S2 <b>${s.s2In||'-'}-${s.s2Out||'-'}</b></span>`;
+  document.getElementById('tabS1Time').textContent = (s.s1In||'-') + '-' + (s.s1Out||'-');
+  document.getElementById('tabS2Time').textContent = (s.s2In||'-') + '-' + (s.s2Out||'-');
+  highlightCurrentSession();
+}
+document.addEventListener('change', e => {
+  if (e.target.id === 'staffSelect') {
+    updateStaffChip();
+    resetAttempts();
+    const s = staffList.find(x => x.staffId === e.target.value);
+    if (s) speak(s.name);
+  }
+});
+
+function selectSession(n) {
+  currentSession = n;
+  document.getElementById('tabS1').className = 'sessionTab' + (n===1?' active-s1':'');
+  document.getElementById('tabS2').className = 'sessionTab' + (n===2?' active-s2':'');
+  highlightCurrentSession();
+}
+
+// "Smart" nudge: highlight whichever session matches the current time of
+// day, without locking out the other one - staff can still switch if
+// they're logging a late/early punch.
+function highlightCurrentSession() {
+  const s = staffList.find(x => x.staffId === document.getElementById('staffSelect').value);
+  const tab1 = document.getElementById('tabS1'), tab2 = document.getElementById('tabS2');
+  tab1.classList.remove('current'); tab2.classList.remove('current','s2cur');
+  if (!s) return;
+  const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes();
+  const toMin = t => { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+m; };
+  const s1mid = toMin(s.s1In) !== null && toMin(s.s1Out) !== null ? (toMin(s.s1In)+toMin(s.s1Out))/2 : null;
+  const s2mid = toMin(s.s2In) !== null && toMin(s.s2Out) !== null ? (toMin(s.s2In)+toMin(s.s2Out))/2 : null;
+  if (s1mid !== null && s2mid !== null) {
+    if (Math.abs(nowMin - s1mid) <= Math.abs(nowMin - s2mid)) { tab1.classList.add('current'); if (currentSession!==1) tab1.click(); }
+    else { tab2.classList.add('current','s2cur'); if (currentSession!==2) tab2.click(); }
+  }
+}
+
+function captureFrame(videoId, canvasId) {
+  const video = document.getElementById(videoId), canvas = document.getElementById(canvasId);
+  canvas.width = video.videoWidth || 320; canvas.height = video.videoHeight || 240;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+async function getDescriptor(canvas) {
+  const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks().withFaceDescriptor();
+  return det ? Array.from(det.descriptor) : null;
+}
+const API_FN = {
+  reverseGeocode: apiReverseGeocode,
+  checkGeofence: apiCheckGeofence,
+  checkStaffPin: apiCheckStaffPin,
+  getStaffDescriptor: apiGetStaffDescriptor,
+  markAttendance: apiMarkAttendance,
+  registerStaff: apiRegisterStaff,
+  completeStaffFace: apiCompleteStaffFace,
+  getAttendanceMatrix: apiGetAttendanceMatrix,
+  getOpenMovement: apiGetOpenMovement,
+  logMovementOut: apiLogMovementOut,
+  logMovementIn: apiLogMovementIn,
+  markLeave: apiMarkLeave,
+  getStaffOwnAttendance: apiGetStaffOwnAttendance,
+  getMovementLog: apiGetMovementLog,
+  submitGrievance: apiSubmitGrievance
+};
+function callServer(fnName, ...args) { return API_FN[fnName](...args); }
+function setStatus(id, cls, msg) { const el = document.getElementById(id); el.className = 'status ' + cls; el.textContent = msg; }
+
+function formatOverlayTime(d) {
+  const day = d.toLocaleDateString('en-IN', { weekday: 'long', timeZone: 'Asia/Kolkata' });
+  const date = d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+  const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+  return `${day}, ${date} ${time} GMT +05:30`;
+}
+function wrapText(ctx, text, maxWidth) {
+  const words = (text || '').split(' '); const lines = []; let line = '';
+  words.forEach(w => { const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; } else line = test; });
+  if (line) lines.push(line); return lines.slice(0, 3);
+}
+function drawGeoOverlay(canvas, opts) {
+  const ctx = canvas.getContext('2d'); const w = canvas.width, h = canvas.height;
+  const barH = Math.max(150, Math.round(h * 0.30)); const y0 = h - barH;
+  const mapSize = Math.round(barH * 0.62); const pad = 12;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0, y0, w, barH);
+  const mx = pad, my = y0 + (barH - mapSize) / 2;
+  ctx.fillStyle = '#dfe7f0'; ctx.fillRect(mx, my, mapSize, mapSize);
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+  for (let gx = mx; gx <= mx + mapSize; gx += mapSize / 5) { ctx.beginPath(); ctx.moveTo(gx, my); ctx.lineTo(gx, my + mapSize); ctx.stroke(); }
+  for (let gy = my; gy <= my + mapSize; gy += mapSize / 5) { ctx.beginPath(); ctx.moveTo(mx, gy); ctx.lineTo(mx + mapSize, gy); ctx.stroke(); }
+  const px = mx + mapSize / 2, py = my + mapSize / 2;
+  ctx.fillStyle = '#b0392b'; ctx.beginPath(); ctx.arc(px, py - 6, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(px - 6, py - 2); ctx.lineTo(px + 6, py - 2); ctx.lineTo(px, py + 10); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.strokeRect(mx, my, mapSize, mapSize);
+  const tx = mx + mapSize + pad; let ty = y0 + pad + 14;
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.round(barH * 0.11)}px sans-serif`;
+  ctx.fillText(opts.title + '  \uD83C\uDDEE\uD83C\uDDF3', tx, ty); ty += barH * 0.14;
+  ctx.font = `${Math.round(barH * 0.085)}px sans-serif`;
+  wrapText(ctx, opts.address || '', w - tx - pad).forEach(line => { ctx.fillText(line, tx, ty); ty += barH * 0.12; });
+  ctx.font = `${Math.round(barH * 0.09)}px sans-serif`;
+  ctx.fillText(`Lat ${opts.lat.toFixed(6)}\u00B0  Long ${opts.lng.toFixed(6)}\u00B0`, tx, ty); ty += barH * 0.13;
+  ctx.fillText(opts.timeStr, tx, ty);
+  const badge = 'BCL KARTAVYA | Session ' + currentSession;
+  ctx.font = `bold ${Math.round(h * 0.028)}px sans-serif`;
+  const bw = ctx.measureText(badge).width + 16;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(w - bw - 8, 8, bw, Math.round(h * 0.045));
+  ctx.fillStyle = '#fff'; ctx.fillText(badge, w - bw, 8 + Math.round(h * 0.032));
+  return canvas;
+}
+async function stampPhoto(canvas, lat, lng) {
+  let address = null;
+  try { address = await callServer('reverseGeocode', lat, lng); } catch (e) {}
+  drawGeoOverlay(canvas, {
+    title: address ? address.split(',')[0] : currentBranchName(),
+    address: address || 'Address unavailable - GPS coordinates below are authoritative',
+    lat, lng, timeStr: formatOverlayTime(new Date())
+  });
+  return canvas.toDataURL('image/jpeg', 0.8);
+}
+
+function waitForVideoReady(videoEl, timeoutMs) {
+  return new Promise(resolve => {
+    if (videoEl.readyState >= 2) return resolve(true);
+    const to = setTimeout(() => resolve(false), timeoutMs || 4000);
+    videoEl.addEventListener('loadeddata', () => { clearTimeout(to); resolve(true); }, { once: true });
+  });
+}
+
+function bestFaceDistance(liveDescriptor, refDescriptors) {
+  if (!refDescriptors) return null;
+  const candidates = [refDescriptors.primary, refDescriptors.secondary]
+    .filter(d => d && d.length)
+    .map(d => faceapi.euclideanDistance(liveDescriptor, d));
+  return candidates.length ? Math.min(...candidates) : null;
+}
+
+function getPositionOnce() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('no geo'));
+    navigator.geolocation.getCurrentPosition(pos => resolve(pos.coords), reject, { enableHighAccuracy: true, timeout: 10000 });
+  });
+}
+async function getAccurateLocation() {
+  let coords = await getPositionOnce();
+  if (coords.accuracy > 50) {
+    setStatus('statusBox','info', `Improving location accuracy (currently +/-${Math.round(coords.accuracy)}m)...`);
+    try {
+      const coords2 = await getPositionOnce();
+      if (coords2.accuracy < coords.accuracy) coords = coords2;
+    } catch (e) {}
+  }
+  return coords;
+}
+
+async function submitAttendance(type) {
+  const staffId = document.getElementById('staffSelect').value;
+  const staff = staffList.find(s => s.staffId === staffId);
+  if (!staff) return setStatus('statusBox','bad','No staff selected.');
+
+  const vElCheck = document.getElementById('video');
+  if (vElCheck.srcObject && currentPos) {
+    return await captureAndVerify(type, staff);
+  }
+
+  setStep('stepLoc', 'active'); setStep('stepFace', null); setStep('stepDone', null);
+  setStatus('statusBox','info','Getting your location...');
+  let coords;
+  try {
+    coords = await getAccurateLocation();
+  } catch (e) {
+    setStep('stepLoc', null);
+    return setStatus('statusBox','bad','Location permission denied - required to mark attendance.');
+  }
+  currentPos = coords;
+  document.getElementById('locDot').classList.add('ready');
+
+  let geo = null;
+  try { geo = await callServer('checkGeofence', currentBranch(), coords.latitude, coords.longitude); } catch (e) {}
+  if (geo && !geo.withinFence) {
+    setStep('stepLoc', null);
+    document.getElementById('locStatus').innerHTML = `You are not in the library location - ${geo.distance}m away, need within ${geo.radius}m.`;
+    speak('You are not in the library location.');
+    return setStatus('statusBox','bad', `Not in the library location (${geo.distance}m away, must be within ${geo.radius}m). Move closer and press the button again.`);
+  }
+  document.getElementById('locStatus').textContent = 'Location captured' + (geo ? ` (${geo.distance}m from branch, +/-${Math.round(coords.accuracy)}m GPS accuracy).` : '.');
+  setStep('stepLoc', 'done');
+  setStep('stepFace', 'active');
+  speak('Location success.');
+
+  setStatus('statusBox','info','Starting camera...');
+  startCamera('video'); showCamera();
+  const vEl = document.getElementById('video');
+  const ready = await waitForVideoReady(vEl, 4000);
+  if (!ready || !vEl.srcObject) {
+    hideCamera();
+    return setStatus('statusBox','bad','Camera permission denied. Allow camera access to mark attendance.');
+  }
+
+  return await captureAndVerify(type, staff);
+}
+
+async function captureAndVerify(type, staff) {
+  const vEl = document.getElementById('video');
+  setStatus('statusBox','info','Verifying face...');
+  speak('Capture face.');
+  const canvas = captureFrame('video','canvas');
+  const liveDescriptor = await getDescriptor(canvas);
+  if (!liveDescriptor) {
+    attemptsLeft = Math.max(0, attemptsLeft - 1);
+    speak('No face detected. You have ' + attemptsLeft + ' chances remaining.');
+    return setStatus('statusBox','bad','No face detected - line up your face in the oval and press the button again.');
+  }
+  setStep('stepFace', 'done');
+  setStep('stepDone', 'active');
+  speak('Face detected. Verifying match.');
+  try {
+    const refDescriptors = await callServer('getStaffDescriptor', currentBranch(), staff.staffId);
+    const faceDistance = bestFaceDistance(liveDescriptor, refDescriptors);
+    setStatus('statusBox','info','Stamping location & time...');
+    const photoBase64 = await stampPhoto(canvas, currentPos.latitude, currentPos.longitude);
+    const res = await callServer('markAttendance', {
+      branch: currentBranch(), staffId: staff.staffId, name: staff.name, designation: staff.designation,
+      session: currentSession, lat: currentPos.latitude, lng: currentPos.longitude, photoBase64, faceDistance, type
+    });
+    setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)`);
+    setStep('stepDone', res.accepted ? 'done' : null);
+    if (res.accepted) {
+      document.getElementById('successMsg').textContent = `${res.status} - ${res.time}`;
+      document.getElementById('successOverlay').classList.add('show');
+      speak('Attendance taken successfully. Thank you. Good day.');
+      resetAttempts();
+      await new Promise(r => setTimeout(r, 1800));
+      document.getElementById('successOverlay').classList.remove('show');
+      hideCamera();
+      if (vEl.srcObject) { vEl.srcObject.getTracks().forEach(t => t.stop()); vEl.srcObject = null; }
+    } else {
+      attemptsLeft = Math.max(0, attemptsLeft - 1);
+      speak('Attendance not verified. You have ' + attemptsLeft + ' chances remaining.');
+      setStatus('statusBox','bad', `${res.status} - not matched closely enough. Line your face up again and press the button to retry (${attemptsLeft} chances left).`);
+    }
+  } catch (err) {
+    setStatus('statusBox','bad', err.message || String(err));
+    setStep('stepDone', null);
+    attemptsLeft = Math.max(0, attemptsLeft - 1);
+    speak('Something went wrong. You have ' + attemptsLeft + ' chances remaining.');
+    hideCamera();
+    document.getElementById('successOverlay').classList.remove('show');
+    if (vEl.srcObject) { vEl.srcObject.getTracks().forEach(t => t.stop()); vEl.srcObject = null; }
+  }
+}
+
+function showRegister() {
+  document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('quickActionsCard').style.display = 'none';
+  document.getElementById('registerCard').style.display = 'block';
+  document.getElementById('regBranchName').textContent = currentBranchName();
+  fetchLocationOnly();
+  startCamera('regVideo');
+}
+function showCheckin() {
+  document.getElementById('registerCard').style.display = 'none';
+  document.getElementById('checkinCard').style.display = 'block';
+  document.getElementById('quickActionsCard').style.display = 'block';
+}
+function showPending() {
+  document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('quickActionsCard').style.display = 'none';
+  document.getElementById('pendingToggle').style.display = 'none';
+  document.getElementById('pendingCard').style.display = 'block';
+  fetchLocationOnly();
+  startCamera('pendVideo');
+}
+function hidePending() {
+  document.getElementById('pendingCard').style.display = 'none';
+  document.getElementById('checkinCard').style.display = 'block';
+  document.getElementById('quickActionsCard').style.display = 'block';
+  document.getElementById('pendingToggle').style.display = 'block';
+}
+
+/* ---- Quick actions: OOD / Leave / Report / Profile / Helpdesk ---- */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function currentStaff() { return staffList.find(s => s.staffId === document.getElementById('staffSelect').value); }
+
+let pendingPinAction = null;
+function requirePin(actionFn) {
+  const s = currentStaff(); if (!s) return;
+  pendingPinAction = actionFn;
+  document.getElementById('pinCheckInput').value = '';
+  document.getElementById('pinCheckStatus').textContent = '';
+  document.getElementById('pinCheckStatus').className = 'status';
+  openModal('pinCheckModal');
+}
+function cancelPinCheck() { pendingPinAction = null; closeModal('pinCheckModal'); }
+function submitPinCheck() {
+  const s = currentStaff(); if (!s) return;
+  const pin = document.getElementById('pinCheckInput').value.trim();
+  callServer('checkStaffPin', currentBranch(), s.staffId, pin).then(ok => {
+    if (ok) {
+      closeModal('pinCheckModal');
+      const fn = pendingPinAction; pendingPinAction = null;
+      if (fn) fn();
+    } else {
+      document.getElementById('pinCheckStatus').className = 'status bad';
+      document.getElementById('pinCheckStatus').textContent = 'Incorrect PIN.';
+    }
+  });
+}
+document.getElementById('pinCheckInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitPinCheck(); });
+
+function openOOD() {
+  const s = currentStaff();
+  if (!s) return;
+  callServer('getOpenMovement', currentBranch(), s.staffId).then(open => {
+    document.getElementById('oodStatus').textContent = '';
+    if (open) {
+      document.getElementById('oodOpenNote').textContent = `Out since ${open.TimeOut} - ${open.Purpose || ''} (${open.Destination || ''})`;
+      document.getElementById('oodOutForm').style.display = 'none';
+      document.getElementById('oodInForm').style.display = 'block';
+    } else {
+      document.getElementById('oodOpenNote').textContent = '';
+      document.getElementById('oodOutForm').style.display = 'block';
+      document.getElementById('oodInForm').style.display = 'none';
+    }
+    openModal('oodModal');
+  });
+}
+function submitOODOut() {
+  const s = currentStaff(); if (!s) return;
+  callServer('logMovementOut', {
+    branch: currentBranch(), staffId: s.staffId, name: s.name, designation: s.designation,
+    purpose: document.getElementById('oodPurpose').value, destination: document.getElementById('oodDestination').value
+  }).then(() => { closeModal('oodModal'); setStatus('statusBox','ok','Movement logged - have a safe trip.'); })
+    .catch(err => { document.getElementById('oodStatus').textContent = err.message; });
+}
+function submitOODIn() {
+  const s = currentStaff(); if (!s) return;
+  callServer('logMovementIn', { branch: currentBranch(), staffId: s.staffId })
+    .then(() => { closeModal('oodModal'); setStatus('statusBox','ok','Welcome back - movement closed.'); })
+    .catch(err => { document.getElementById('oodStatus').textContent = err.message; });
+}
+
+function openLeaveSelf() {
+  const s = currentStaff(); if (!s) return;
+  document.getElementById('leaveSelfDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('leaveSelfStatus').textContent = '';
+  openModal('leaveSelfModal');
+}
+function submitLeaveSelf() {
+  const s = currentStaff(); if (!s) return;
+  callServer('markLeave', {
+    branch: currentBranch(), staffId: s.staffId, name: s.name, designation: s.designation,
+    date: document.getElementById('leaveSelfDate').value, remarks: document.getElementById('leaveSelfRemarks').value
+  }).then(() => { closeModal('leaveSelfModal'); setStatus('statusBox','ok','Leave marked for ' + document.getElementById('leaveSelfDate').value + '.'); })
+    .catch(err => { document.getElementById('leaveSelfStatus').textContent = err.message; });
+}
+
+function statusColor(s) {
+  if (s === 'P' || s === 'Checked Out') return '#0e6e64';
+  if (s === 'L') return '#b8862c';
+  if (s === 'A') return '#b0392b';
+  if (s === 'LV') return '#5b3fc0';
+  if (s === 'H') return '#c0692b';
+  if (s === 'WO') return '#888';
+  return '#333';
+}
+function openMyReport() {
+  const s = currentStaff(); if (!s) return;
+  const monthSel = document.getElementById('reportMonth');
+  const yearSel = document.getElementById('reportYear');
+  if (!monthSel.options.length) {
+    ['January','February','March','April','May','June','July','August','September','October','November','December']
+      .forEach((m, i) => monthSel.innerHTML += `<option value="${i+1}">${m}</option>`);
+    const nowY = new Date().getFullYear();
+    for (let y = nowY - 1; y <= nowY + 1; y++) yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  const now = new Date();
+  monthSel.value = now.getMonth() + 1;
+  yearSel.value = now.getFullYear();
+  loadMyReport();
+  openModal('reportModal');
+}
+function loadMyReport() {
+  const s = currentStaff(); if (!s) return;
+  const month = parseInt(document.getElementById('reportMonth').value, 10);
+  const year = parseInt(document.getElementById('reportYear').value, 10);
+  const pad = n => String(n).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate();
+  const fromDate = `${year}-${pad(month)}-01`;
+  const toDate = `${year}-${pad(month)}-${pad(lastDay)}`;
+  callServer('getStaffOwnAttendance', currentBranch(), s.staffId, fromDate, toDate).then(rows => {
+    rows.sort((a,b) => a.Date < b.Date ? -1 : 1);
+    document.getElementById('reportTbody').innerHTML = rows.map(r => {
+      const s1Range = (r.S1TimeIn || r.S1TimeOut) ? `${r.S1TimeIn||'-'} \u2192 ${r.S1TimeOut||'-'}` : '-';
+      const s2Range = (r.S2TimeIn || r.S2TimeOut) ? `${r.S2TimeIn||'-'} \u2192 ${r.S2TimeOut||'-'}` : '-';
+      const s1 = r.S1StatusIn || '-';
+      const s2 = r.S2StatusIn || '-';
+      const day = r.Date.slice(8,10);
+      return `<tr><td>${day}</td><td>${s1Range}</td><td>${s2Range}</td>
+        <td style="color:${statusColor(s1)};font-weight:700;">${s1}</td>
+        <td style="color:${statusColor(s2)};font-weight:700;">${s2}</td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">No records.</td></tr>';
+  });
+}
+
+function openProfile() {
+  const s = currentStaff(); if (!s) return;
+  document.getElementById('profileBody').innerHTML = `
+    <div class="profileRow"><span>Name</span><b>${s.name}</b></div>
+    <div class="profileRow"><span>Designation</span><b>${s.designation || '-'}</b></div>
+    <div class="profileRow"><span>Phone</span><b>${s.phone || '-'}</b></div>
+    <div class="profileRow"><span>Staff ID</span><b>${s.staffId}</b></div>
+    <div class="profileRow"><span>Session 1</span><b>${s.s1In||'-'} - ${s.s1Out||'-'}</b></div>
+    <div class="profileRow"><span>Session 2</span><b>${s.s2In||'-'} - ${s.s2Out||'-'}</b></div>`;
+  openModal('profileModal');
+}
+function openHelpdesk() { openModal('helpdeskModal'); }
+function openWhatsNew() { openModal('whatsNewModal'); }
+
+function openMovementHistory() {
+  const s = currentStaff(); if (!s) return;
+  const to = new Date(); const from = new Date(); from.setDate(from.getDate() - 13);
+  const fmt = d => d.toISOString().slice(0,10);
+  callServer('getMovementLog', currentBranch(), fmt(from), fmt(to)).then(rows => {
+    const mine = rows.filter(r => r.StaffID === s.staffId);
+    document.getElementById('movementTbody').innerHTML = mine.map(r => `
+      <tr><td>${r.Date}</td><td>${r.TimeOut}</td><td>${r.Purpose||''}</td><td>${r.TimeIn||'-'}</td></tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">No movement records.</td></tr>';
+    openModal('movementModal');
+  });
+}
+
+function openAttendanceAdmin() { openModal('attendanceAdminModal'); }
+function openFAQ() { openModal('faqModal'); }
+
+function openGrievance() {
+  document.getElementById('grievanceMsg').value = '';
+  document.getElementById('grievanceStatus').textContent = '';
+  openModal('grievanceModal');
+}
+function submitGrievanceMsg() {
+  const s = currentStaff(); if (!s) return;
+  const msg = document.getElementById('grievanceMsg').value.trim();
+  if (!msg) return;
+  callServer('submitGrievance', { branch: currentBranch(), staffId: s.staffId, name: s.name, message: msg })
+    .then(() => { closeModal('grievanceModal'); setStatus('statusBox','ok','Grievance submitted - your admin will follow up.'); })
+    .catch(err => { document.getElementById('grievanceStatus').textContent = err.message; });
+}
+
+async function captureAndRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const designation = document.getElementById('regDesignation').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const s1In = document.getElementById('regS1In').value;
+  const s1Out = document.getElementById('regS1Out').value;
+  const s2In = document.getElementById('regS2In').value;
+  const s2Out = document.getElementById('regS2Out').value;
+  if (!name) return setStatus('regStatus','bad','Enter the staff name.');
+  if (!currentPos) return setStatus('regStatus','bad','Waiting for GPS location - please allow location access.');
+  const canvas = captureFrame('regVideo','regCanvas');
+  const descriptor = await getDescriptor(canvas);
+  if (!descriptor) return setStatus('regStatus','bad','No face detected - center the face in frame and retry.');
+  try {
+    setStatus('regStatus','info','Saving...');
+    const photoBase64 = await stampPhoto(canvas, currentPos.latitude, currentPos.longitude);
+    const res = await callServer('registerStaff', {
+      branch: currentBranch(), name, designation, phone,
+      s1In, s1Out, s2In, s2Out, photoBase64, faceDescriptor: descriptor
+    });
+    setStatus('regStatus','ok','Registered. Staff ID: ' + res.staffId);
+    loadStaff();
+  } catch (err) { setStatus('regStatus','bad', err.message || String(err)); }
+}
+
+async function captureAndCompletePending() {
+  const staffId = document.getElementById('pendingSelect').value;
+  if (!staffId) return setStatus('pendStatus','bad','Select your name first.');
+  if (!currentPos) return setStatus('pendStatus','bad','Waiting for GPS location - please allow location access.');
+  const canvas = captureFrame('pendVideo','pendCanvas');
+  const descriptor = await getDescriptor(canvas);
+  if (!descriptor) return setStatus('pendStatus','bad','No face detected - center your face in frame and retry.');
+  try {
+    setStatus('pendStatus','info','Saving...');
+    const photoBase64 = await stampPhoto(canvas, currentPos.latitude, currentPos.longitude);
+    await apiCompleteStaffFace({ branch: currentBranch(), staffId, photoBase64, faceDescriptor: descriptor });
+    setStatus('pendStatus','ok','Face saved. You can now check in from the main screen.');
+    loadStaff();
+  } catch (err) { setStatus('pendStatus','bad', err.message || String(err)); }
+}
+
+function tickClock() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+  document.getElementById('clockLine').textContent = dateStr + ' | ' + timeStr;
+}
+function checkHolidayBanner() {
+  const dateStr = new Date().toISOString().slice(0,10);
+  callServer('getAttendanceMatrix', currentBranch(), dateStr, dateStr).then(rows => {
+    const banner = document.getElementById('holidayBanner');
+    const r = rows && rows[0];
+    if (r && r.S1StatusIn === 'WO') { banner.textContent = 'Today is the weekly off (Monday). Attendance is not required.'; banner.classList.add('show'); }
+    else if (r && r.S1StatusIn === 'H') { banner.textContent = 'Today is a holiday' + (r.Remarks ? ' - ' + r.Remarks : '') + '. Attendance is not required.'; banner.classList.add('show'); }
+    else { banner.classList.remove('show'); }
+  }).catch(()=>{});
+}
+
+function boot() {
+  document.getElementById('regBranchName').textContent = currentBranchName();
+  document.getElementById('headerBranchName').textContent = currentBranchName();
+  speakWelcome();
+  loadStaff();
+  checkHolidayBanner();
+}
+document.getElementById('regBranchName').textContent = currentBranchName();
+document.getElementById('headerBranchName').textContent = currentBranchName();
+tickClock();
+setInterval(tickClock, 1000);
+setInterval(highlightCurrentSession, 60000);
+if (!API_URL) { document.getElementById('setupCard').style.display = 'block'; }
+else { boot(); }
+loadModels();
+</script>
+</body>
+</html>
