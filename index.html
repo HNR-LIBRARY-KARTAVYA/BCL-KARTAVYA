@@ -180,8 +180,8 @@
     <div class="greeting" id="greetingText"></div>
 
     <div class="sessionTabs">
-      <div class="sessionTab active-s1" id="tabS1" onclick="speak('Session 1'); selectSession(1);">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
-      <div class="sessionTab" id="tabS2" onclick="speak('Session 2'); selectSession(2);">Session 2<span class="t" id="tabS2Time">evening</span><span class="pendingBadge">DUE NOW</span></div>
+      <div class="sessionTab active-s1" id="tabS1">Session 1<span class="t" id="tabS1Time">morning</span></div>
+      <div class="sessionTab active-s2" id="tabS2">Session 2<span class="t" id="tabS2Time">evening</span></div>
     </div>
 
     <div class="stepRow">
@@ -202,9 +202,15 @@
     </div>
     <canvas id="canvas" style="display:none;"></canvas>
 
+    <div class="small" style="margin-top:12px;margin-bottom:2px;font-weight:700;color:var(--teal-deep);">Session 1</div>
     <div class="btnrow">
-      <button class="btn-in" id="btnCheckIn" onclick="submitAttendance('in')">Check In</button>
-      <button class="btn-out" id="btnCheckOut" onclick="submitAttendance('out')">Check Out</button>
+      <button class="btn-in" id="btnS1In" onclick="punch(1,'in')">S1 Check In</button>
+      <button class="btn-out" id="btnS1Out" onclick="punch(1,'out')">S1 Check Out</button>
+    </div>
+    <div class="small" style="margin-top:10px;margin-bottom:2px;font-weight:700;color:var(--gold-deep);">Session 2</div>
+    <div class="btnrow">
+      <button class="btn-in" id="btnS2In" onclick="punch(2,'in')">S2 Check In</button>
+      <button class="btn-out" id="btnS2Out" onclick="punch(2,'out')">S2 Check Out</button>
     </div>
     <div class="status" id="statusBox"></div>
   </div>
@@ -430,7 +436,12 @@ function speakWelcome() {
   speak('Welcome to ' + branchSpokenName(currentBranch()) + '. Library Kartavya.');
 }
 function resetAttempts() { attemptsLeft = 5; }
-let API_URL = localStorage.getItem('bcl_kartavya_api_url') || '';
+// Paste your deployed Apps Script Web App URL here ONCE (ends in /exec) and
+// commit this file to GitHub. After that, every device that opens this page
+// works immediately - no "Connect to backend" screen, nothing to paste, and
+// nothing lost if a browser's storage is cleared.
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby3YQS3ZY2J12G-_6tXvyggn8E9ZyklkuHtaNhx081I6dQu9kj9RqQqsrpsqOcFQuBThQ/exec';
+let API_URL = localStorage.getItem('bcl_kartavya_api_url') || DEFAULT_API_URL || '';
 
 function saveApiUrl() {
   const v = document.getElementById('apiUrlInput').value.trim();
@@ -579,8 +590,8 @@ function updateStaffChip() {
   document.getElementById('wtValue').textContent = `S1 ${s.s1In||'-'} to ${s.s1Out||'-'}  |  S2 ${s.s2In||'-'} to ${s.s2Out||'-'}`;
   document.getElementById('tabS1Time').textContent = (s.s1In||'-') + '-' + (s.s1Out||'-');
   document.getElementById('tabS2Time').textContent = (s.s2In||'-') + '-' + (s.s2Out||'-');
-  highlightCurrentSession();
   resetCheckButtons();
+  refreshTodayStatus();
 }
 function explainWorkTime() {
   alert('Your work time is set by your library admin to keep attendance records accurate for everyone. If it needs to change, please ask your admin to update it from the Staff & Timing panel.');
@@ -595,15 +606,47 @@ function updateGreeting() {
   const el = document.getElementById('greetingText');
   if (el) el.textContent = greetingByHour();
 }
+// Four dedicated buttons (S1 In, S1 Out, S2 In, S2 Out) instead of a
+// session-tab switcher, so both sessions and all four times are always
+// visible together - nothing to accidentally leave on the wrong tab.
+function btnIdFor(session, type) { return 'btnS' + session + (type === 'in' ? 'In' : 'Out'); }
 function resetCheckButtons() {
-  const bi = document.getElementById('btnCheckIn'), bo = document.getElementById('btnCheckOut');
-  bi.disabled = false; bi.innerHTML = 'Check In';
-  bo.disabled = false; bo.innerHTML = 'Check Out';
+  [1,2].forEach(session => {
+    ['in','out'].forEach(type => {
+      const btn = document.getElementById(btnIdFor(session, type));
+      btn.disabled = false;
+      btn.innerHTML = 'S' + session + ' Check ' + (type === 'in' ? 'In' : 'Out');
+    });
+  });
 }
-function markButtonChecked(type, timeStr) {
-  const btn = document.getElementById(type === 'in' ? 'btnCheckIn' : 'btnCheckOut');
+function markButtonChecked(session, type, timeStr) {
+  const btn = document.getElementById(btnIdFor(session, type));
   btn.disabled = true;
-  btn.innerHTML = (type === 'in' ? 'CHECKED IN' : 'CHECKED OUT') + `<span class="checkedInTime">${timeStr}</span>`;
+  btn.innerHTML = (type === 'in' ? 'S' + session + ' CHECKED IN' : 'S' + session + ' CHECKED OUT') + `<span class="checkedInTime">${timeStr}</span>`;
+}
+// Pulls today's actual record for the selected staff from the sheet and
+// updates all four buttons to match reality - so reopening the page,
+// switching staff and back, or a phone restart never shows a blank "Check
+// In" for something that was already recorded today.
+function refreshTodayStatus() {
+  const staffId = document.getElementById('staffSelect').value;
+  if (!staffId || !API_URL) return;
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // yyyy-MM-dd
+  callServer('getStaffOwnAttendance', currentBranch(), staffId, todayStr, todayStr).then(rows => {
+    const row = rows && rows[0];
+    if (!row) return;
+    if (row.S1TimeIn) markButtonChecked(1, 'in', row.S1TimeIn);
+    if (row.S1TimeOut) markButtonChecked(1, 'out', row.S1TimeOut);
+    if (row.S2TimeIn) markButtonChecked(2, 'in', row.S2TimeIn);
+    if (row.S2TimeOut) markButtonChecked(2, 'out', row.S2TimeOut);
+  }).catch(() => {}); // silent - buttons just stay in their default state
+}
+// Fired by the four buttons directly - each one knows its own session and
+// type, so there's no shared "currentSession" state to get out of sync.
+function punch(session, type) {
+  currentSession = session;
+  speak('Session ' + session + (type === 'in' ? ' check in' : ' check out'));
+  return submitAttendance(type);
 }
 document.addEventListener('change', e => {
   if (e.target.id === 'staffSelect') {
@@ -613,32 +656,6 @@ document.addEventListener('change', e => {
     if (s) speak(s.name);
   }
 });
-
-function selectSession(n) {
-  currentSession = n;
-  document.getElementById('tabS1').className = 'sessionTab' + (n===1?' active-s1':'');
-  document.getElementById('tabS2').className = 'sessionTab' + (n===2?' active-s2':'');
-  resetCheckButtons();
-  highlightCurrentSession();
-}
-
-// "Smart" nudge: highlight whichever session matches the current time of
-// day, without locking out the other one - staff can still switch if
-// they're logging a late/early punch.
-function highlightCurrentSession() {
-  const s = staffList.find(x => x.staffId === document.getElementById('staffSelect').value);
-  const tab1 = document.getElementById('tabS1'), tab2 = document.getElementById('tabS2');
-  tab1.classList.remove('current'); tab2.classList.remove('current','s2cur');
-  if (!s) return;
-  const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes();
-  const toMin = t => { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+m; };
-  const s1mid = toMin(s.s1In) !== null && toMin(s.s1Out) !== null ? (toMin(s.s1In)+toMin(s.s1Out))/2 : null;
-  const s2mid = toMin(s.s2In) !== null && toMin(s.s2Out) !== null ? (toMin(s.s2In)+toMin(s.s2Out))/2 : null;
-  if (s1mid !== null && s2mid !== null) {
-    if (Math.abs(nowMin - s1mid) <= Math.abs(nowMin - s2mid)) { tab1.classList.add('current'); if (currentSession!==1) tab1.click(); }
-    else { tab2.classList.add('current','s2cur'); if (currentSession!==2) tab2.click(); }
-  }
-}
 
 function captureFrame(videoId, canvasId) {
   const video = document.getElementById(videoId), canvas = document.getElementById(canvasId);
@@ -827,14 +844,16 @@ async function captureAndVerify(type, staff) {
       branch: currentBranch(), staffId: staff.staffId, name: staff.name, designation: staff.designation,
       session: currentSession, lat: currentPos.latitude, lng: currentPos.longitude, photoBase64, faceDistance, type
     });
-    setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)`);
+    const actualType = res.type || type;
+    const noteAuto = res.autoCorrected ? ` (no check-in was found for Session ${res.session}, so this was recorded as your check-in instead)` : '';
+    setStatus('statusBox', res.accepted ? 'ok' : 'bad', `Session ${res.session} - ${res.status} - ${res.time} on ${res.date} (${res.distance}m from branch)${noteAuto}`);
     setStep('stepDone', res.accepted ? 'done' : null);
     if (res.accepted) {
-      document.getElementById('successMsg').textContent = `${res.status} - ${res.time}`;
+      document.getElementById('successMsg').textContent = `${res.status} - ${res.time}` + (res.autoCorrected ? ' (recorded as Check-In)' : '');
       document.getElementById('successOverlay').classList.add('show');
-      speak('Attendance taken successfully. Thank you. Good day.');
+      speak(res.autoCorrected ? 'No check-in was found, so this was recorded as your check-in instead.' : 'Attendance taken successfully. Thank you. Good day.');
       resetAttempts();
-      markButtonChecked(type, res.time);
+      markButtonChecked(res.session, actualType, res.time);
       await new Promise(r => setTimeout(r, 1800));
       document.getElementById('successOverlay').classList.remove('show');
       hideCamera();
@@ -1124,7 +1143,7 @@ tickClock();
 updateGreeting();
 setInterval(updateGreeting, 60000);
 setInterval(tickClock, 1000);
-setInterval(highlightCurrentSession, 60000);
+setInterval(refreshTodayStatus, 60000);
 if (!API_URL) { document.getElementById('setupCard').style.display = 'block'; }
 else { boot(); }
 loadModels();
