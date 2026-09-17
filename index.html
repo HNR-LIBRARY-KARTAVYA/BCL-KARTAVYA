@@ -45,7 +45,14 @@
   .holidayBanner{display:none;background:#fbf3e3;border:1px solid #e9d3a0;color:#7a5a15;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px;}
   .holidayBanner.show{display:block;}
 
-  .staffChip{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--ink-soft);background:#f4f6f2;border-radius:8px;padding:8px 10px;}
+  .staffChip{display:none;}
+  .workTimeCard{display:none;margin-top:10px;background:#f4f6f2;border:1px dashed #d4dad2;border-radius:10px;padding:12px 14px;}
+  .workTimeCard .wtTop{display:flex;align-items:center;justify-content:space-between;}
+  .workTimeCard .wtLabel{font-size:12px;color:#8a938a;font-weight:600;}
+  .workTimeCard .wtEdit{font-size:12px;color:var(--bad);font-weight:700;cursor:pointer;}
+  .workTimeCard .wtValue{margin-top:6px;font-size:15px;font-weight:700;color:var(--ink);}
+  .greeting{text-align:center;margin:14px 0 4px;font-size:17px;font-weight:700;color:var(--teal-deep);}
+  .checkedInTime{display:block;font-size:12.5px;font-weight:600;margin-top:2px;}
   .staffChip b{color:var(--ink);}
 
   .sessionTabs{display:flex;gap:8px;margin:14px 0 4px;}
@@ -62,7 +69,7 @@
   .cameraBox{position:relative;display:none;}
   .cameraBox.show{display:block;}
   .faceGuide{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
-    width:60%;height:42%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,.6);}
+    width:84%;height:76%;border:4px dashed rgba(255,255,255,.9);border-radius:50%;pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,.6);}
   .successOverlay{position:absolute;inset:0;background:rgba(14,110,100,.92);border-radius:11px;
     display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px;}
   .successOverlay.show{display:flex;}
@@ -83,7 +90,7 @@
 
   .btnrow{display:flex;gap:10px;margin-top:14px;}
   button{border:none;border-radius:9px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:12px;}
-  .btnrow button{flex:1;}
+  .btnrow button{flex:1;padding:20px 12px;font-size:18px;border-radius:12px;}
   .btn-in{background:var(--teal);color:#fff;}
   .btn-in:hover{background:var(--teal-deep);}
   .btn-out{background:#c0392b;color:#fff;}
@@ -163,6 +170,14 @@
     <label>Staff Member</label>
     <select id="staffSelect"></select>
     <div class="staffChip" id="staffChip" style="display:none;"></div>
+    <div class="workTimeCard" id="workTimeCard">
+      <div class="wtTop">
+        <span class="wtLabel">YOUR WORK TIME</span>
+        <span class="wtEdit" onclick="explainWorkTime()">Edit</span>
+      </div>
+      <div class="wtValue" id="wtValue">-</div>
+    </div>
+    <div class="greeting" id="greetingText"></div>
 
     <div class="sessionTabs">
       <div class="sessionTab active-s1" id="tabS1" onclick="speak('Session 1'); selectSession(1);">Session 1<span class="t" id="tabS1Time">morning</span><span class="pendingBadge">DUE NOW</span></div>
@@ -188,8 +203,8 @@
     <canvas id="canvas" style="display:none;"></canvas>
 
     <div class="btnrow">
-      <button class="btn-in" onclick="submitAttendance('in')">Check In</button>
-      <button class="btn-out" onclick="submitAttendance('out')">Check Out</button>
+      <button class="btn-in" id="btnCheckIn" onclick="submitAttendance('in')">Check In</button>
+      <button class="btn-out" id="btnCheckOut" onclick="submitAttendance('out')">Check Out</button>
     </div>
     <div class="status" id="statusBox"></div>
   </div>
@@ -557,12 +572,38 @@ function loadStaff() {
 function updateStaffChip() {
   const s = staffList.find(x => x.staffId === document.getElementById('staffSelect').value);
   const chip = document.getElementById('staffChip');
-  if (!s) { chip.style.display = 'none'; return; }
-  chip.style.display = 'flex';
-  chip.innerHTML = `<span>${s.designation || 'Staff'}</span><span>S1 <b>${s.s1In||'-'}-${s.s1Out||'-'}</b> | S2 <b>${s.s2In||'-'}-${s.s2Out||'-'}</b></span>`;
+  const wtCard = document.getElementById('workTimeCard');
+  if (!s) { chip.style.display = 'none'; wtCard.style.display = 'none'; return; }
+  chip.style.display = 'none';
+  wtCard.style.display = 'block';
+  document.getElementById('wtValue').textContent = `S1 ${s.s1In||'-'} to ${s.s1Out||'-'}  |  S2 ${s.s2In||'-'} to ${s.s2Out||'-'}`;
   document.getElementById('tabS1Time').textContent = (s.s1In||'-') + '-' + (s.s1Out||'-');
   document.getElementById('tabS2Time').textContent = (s.s2In||'-') + '-' + (s.s2Out||'-');
   highlightCurrentSession();
+  resetCheckButtons();
+}
+function explainWorkTime() {
+  alert('Your work time is set by your library admin to keep attendance records accurate for everyone. If it needs to change, please ask your admin to update it from the Staff & Timing panel.');
+}
+function greetingByHour() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning!';
+  if (h < 17) return 'Good Afternoon!';
+  return 'Good Evening!';
+}
+function updateGreeting() {
+  const el = document.getElementById('greetingText');
+  if (el) el.textContent = greetingByHour();
+}
+function resetCheckButtons() {
+  const bi = document.getElementById('btnCheckIn'), bo = document.getElementById('btnCheckOut');
+  bi.disabled = false; bi.innerHTML = 'Check In';
+  bo.disabled = false; bo.innerHTML = 'Check Out';
+}
+function markButtonChecked(type, timeStr) {
+  const btn = document.getElementById(type === 'in' ? 'btnCheckIn' : 'btnCheckOut');
+  btn.disabled = true;
+  btn.innerHTML = (type === 'in' ? 'CHECKED IN' : 'CHECKED OUT') + `<span class="checkedInTime">${timeStr}</span>`;
 }
 document.addEventListener('change', e => {
   if (e.target.id === 'staffSelect') {
@@ -577,6 +618,7 @@ function selectSession(n) {
   currentSession = n;
   document.getElementById('tabS1').className = 'sessionTab' + (n===1?' active-s1':'');
   document.getElementById('tabS2').className = 'sessionTab' + (n===2?' active-s2':'');
+  resetCheckButtons();
   highlightCurrentSession();
 }
 
@@ -792,6 +834,7 @@ async function captureAndVerify(type, staff) {
       document.getElementById('successOverlay').classList.add('show');
       speak('Attendance taken successfully. Thank you. Good day.');
       resetAttempts();
+      markButtonChecked(type, res.time);
       await new Promise(r => setTimeout(r, 1800));
       document.getElementById('successOverlay').classList.remove('show');
       hideCamera();
@@ -1078,6 +1121,8 @@ function boot() {
 document.getElementById('regBranchName').textContent = currentBranchName();
 document.getElementById('headerBranchName').textContent = currentBranchName();
 tickClock();
+updateGreeting();
+setInterval(updateGreeting, 60000);
 setInterval(tickClock, 1000);
 setInterval(highlightCurrentSession, 60000);
 if (!API_URL) { document.getElementById('setupCard').style.display = 'block'; }
