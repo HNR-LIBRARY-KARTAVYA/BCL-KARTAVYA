@@ -200,6 +200,7 @@
         <div class="successMsg" id="successMsg"></div>
       </div>
     </div>
+    <button class="btn-reg" id="btnCapture" style="display:none;margin-top:10px;">Capture</button>
     <canvas id="canvas" style="display:none;"></canvas>
 
     <div class="small" style="margin-top:12px;margin-bottom:2px;font-weight:700;color:var(--teal-deep);">Session 1</div>
@@ -520,7 +521,7 @@ function setStep(id, state) {
   if (state) el.classList.add(state);
 }
 function showCamera() { document.getElementById('cameraBox').classList.add('show'); }
-function hideCamera() { document.getElementById('cameraBox').classList.remove('show'); }
+function hideCamera() { document.getElementById('cameraBox').classList.remove('show'); document.getElementById('btnCapture').style.display = 'none'; }
 
 function getLocation() {
   setStep('stepLoc', 'active');
@@ -774,6 +775,19 @@ async function getAccurateLocation() {
   return coords;
 }
 
+// Shows the Capture button and waits for the staff member to press it -
+// used both the first time the camera opens and on a retry - so nothing is
+// captured or compared until they've actually lined their face up and say
+// they're ready, instead of the app grabbing a frame the instant the
+// camera turns on.
+function waitForCaptureClick() {
+  return new Promise(resolve => {
+    const btn = document.getElementById('btnCapture');
+    btn.style.display = 'inline-block';
+    btn.onclick = () => { btn.style.display = 'none'; resolve(); };
+  });
+}
+
 async function submitAttendance(type) {
   const staffId = document.getElementById('staffSelect').value;
   const staff = staffList.find(s => s.staffId === staffId);
@@ -781,6 +795,9 @@ async function submitAttendance(type) {
 
   const vElCheck = document.getElementById('video');
   if (vElCheck.srcObject && currentPos) {
+    setStatus('statusBox','info','Line up your face in the oval, then press Capture.');
+    speak('Line up your face and press capture.');
+    await waitForCaptureClick();
     return await captureAndVerify(type, staff);
   }
 
@@ -818,6 +835,9 @@ async function submitAttendance(type) {
     return setStatus('statusBox','bad','Camera permission denied. Allow camera access to mark attendance.');
   }
 
+  setStatus('statusBox','info','Line up your face in the oval, then press Capture.');
+  speak('Line up your face and press capture.');
+  await waitForCaptureClick();
   return await captureAndVerify(type, staff);
 }
 
