@@ -441,7 +441,7 @@ function resetAttempts() { attemptsLeft = 5; }
 // commit this file to GitHub. After that, every device that opens this page
 // works immediately - no "Connect to backend" screen, nothing to paste, and
 // nothing lost if a browser's storage is cleared.
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby3YQS3ZY2J12G-_6tXvyggn8E9ZyklkuHtaNhx081I6dQu9kj9RqQqsrpsqOcFQuBThQ/exec';
+const DEFAULT_API_URL = '';
 let API_URL = localStorage.getItem('bcl_kartavya_api_url') || DEFAULT_API_URL || '';
 
 function saveApiUrl() {
@@ -664,8 +664,12 @@ function captureFrame(videoId, canvasId) {
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
+// inputSize defaults to 416 - noticeably slow on older/low-end Android
+// phones since it scales up the whole detection cost. 320 is plenty for a
+// single close-up face filling the oval guide and runs meaningfully faster
+// with no real accuracy loss for this use case.
 async function getDescriptor(canvas) {
-  const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions())
+  const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
     .withFaceLandmarks().withFaceDescriptor();
   return det ? Array.from(det.descriptor) : null;
 }
@@ -732,7 +736,17 @@ function drawGeoOverlay(canvas, opts) {
 }
 async function stampPhoto(canvas, lat, lng) {
   let address = null;
-  try { address = await callServer('reverseGeocode', lat, lng); } catch (e) {}
+  // Reverse-geocoding (for the readable address stamped on the photo) is
+  // cosmetic only - GPS coordinates are what's actually checked. But if
+  // Google's geocoding service is slow/throttled, an un-timed await here
+  // can stall the ENTIRE attendance flow for minutes. Cap it at 4 seconds
+  // and fall back to coordinates-only, same as the try/catch already did.
+  try {
+    address = await Promise.race([
+      callServer('reverseGeocode', lat, lng),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('geocode timeout')), 4000))
+    ]);
+  } catch (e) {}
   drawGeoOverlay(canvas, {
     title: address ? address.split(',')[0] : currentBranchName(),
     address: address || 'Address unavailable - GPS coordinates below are authoritative',
